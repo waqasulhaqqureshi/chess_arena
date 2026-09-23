@@ -1,7 +1,10 @@
 /// Matchmaking + chat brain verification (v7). Run with: flutter test
 library;
 
+import 'dart:math';
+
 import 'package:chess_arena/services/chat_brain.dart';
+import 'package:chess_arena/services/hybrid_bot_chat_engine.dart';
 import 'package:chess_arena/services/matchmaking_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -31,5 +34,22 @@ void main() {
     final r = b.reply('I really love playing chess every day');
     expect(r, isNotNull);
     expect(r!.isNotEmpty, isTrue);
+  });
+
+  test('typing delay: warm-up floor + scales with length, never instant',
+      () {
+    final short = HybridBotChatEngine.typingMillis('gg', Random(1));
+    final long = HybridBotChatEngine.typingMillis(
+        'that was such a fun game omg', Random(1));
+    expect(short, greaterThanOrEqualTo(600));
+    expect(long, greaterThan(short));
+    expect(short, lessThan(2000));
+  });
+
+  test('event matrix covers every BotEvent with casual phrases', () {
+    final e = HybridBotChatEngine();
+    for (final ev in BotEvent.values) {
+      expect(e.eventPhrase(ev).isNotEmpty, isTrue);
+    }
   });
 }

@@ -85,3 +85,7 @@ Plain Maps only — no codegen adapters.
   identity (name pool + ISO flag + rating near player ± form boost).
   Flags render via `country_pickers` (`flagWidget` in `piece_widget.dart`);
   avatars via `random_avatar` identicons seeded by the name.
+- **Bot chat (v8)**: `HybridBotChatEngine` — ML Kit Smart Reply
+  (contextual) → `eliza_chat` → hardcoded event matrix; typing delays via
+  length math. Game events (blunder swing ≥300cp, low clock, check,
+  promotion, result) fire matrix lines from `GameController`.

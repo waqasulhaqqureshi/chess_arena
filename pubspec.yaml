@@ -21,6 +21,9 @@ dependencies:
   stockfish: ">=1.8.1 <2.0.0"         # native engine (Android/iOS) via FFI
   random_name_generator: ">=1.5.0 <2.0.0" # localized human names per zone
   eliza_chat: ">=1.0.1 <2.0.0"        # offline ELIZA conversational brain
+  # Standalone ML Kit Smart Reply (NOT the monolithic google_ml_kit,
+  # which bloats 100 MB+). Contextual on-device replies, Android/iOS only.
+  google_mlkit_smart_reply: ">=0.15.1 <1.0.0"
   flutter_svg: ">=2.0.0 <3.0.0"
 
 dev_dependencies:

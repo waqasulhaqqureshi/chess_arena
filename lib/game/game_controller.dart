@@ -15,7 +15,7 @@ import '../engine/chess_rules.dart';
 import '../engine/cpu_brain.dart';
 import '../engine/stockfish_service.dart';
 import '../services/ads_service.dart';
-import '../services/chat_brain.dart';
+import '../services/hybrid_bot_chat_engine.dart';
 import '../services/sound_service.dart';
 
 String formatClock(double ms) {
@@ -147,7 +147,8 @@ class GameController extends ChangeNotifier {
   final Random _rng = Random();
   final Stopwatch _live = Stopwatch();
   final List<List<int>> _moveLog = [];
-  final ChatBrain _brain = ChatBrain();
+  final HybridBotChatEngine chatEngine = HybridBotChatEngine();
+  bool _lowTimeSaid = false;
 
   GameController({
     required this.repo,
@@ -201,8 +202,8 @@ class GameController extends ChangeNotifier {
     _live.start();
     if (setup.timed) _startClock();
     if (saveSnapshot) _saveLive();
-    // Opponent says hello (dependency-backed ELIZA greeting).
-    _scheduleOppChat(_brain.greeting(), 2200);
+    // Opponent says hello (typing-delayed, ML/ELIZA/matrix chain).
+    chatEngine.phraseFor(BotEvent.greeting).then(_pushOppChat);
   }
 
   bool get isPlayerTurn =>
@@ -357,6 +358,7 @@ class GameController extends ChangeNotifier {
 
   Future<void> _commitPlayerMove(ChessMove m) async {
     final moverWhite = game.whiteToMove;
+    final evalBefore = evaluate(game);
     final wasCapture = game.board[m.to] != 0 ||
         (game.board[m.from].abs() == pawn && m.to == game.ep);
     final san = game.playMove(m);
@@ -365,6 +367,7 @@ class GameController extends ChangeNotifier {
       _clearSelection();
       return;
     }
+    _reactToPlayerMove(m, evalBefore);
     lastMove = m;
     _moveLog.add([m.from, m.to, m.promotion]);
     _clearSelection();
@@ -448,6 +451,7 @@ class GameController extends ChangeNotifier {
       return;
     }
     final moverWhite = game.whiteToMove;
+    final evalBefore = evaluate(game);
     final wasCapture = game.board[chosen.to] != 0 ||
         (game.board[chosen.from].abs() == pawn && chosen.to == game.ep);
     final san = game.playMove(chosen);
@@ -456,6 +460,7 @@ class GameController extends ChangeNotifier {
       notifyListeners();
       return;
     }
+    _reactToCpuMove(evalBefore);
     lastMove = chosen;
     _moveLog.add([chosen.from, chosen.to, chosen.promotion]);
     _afterMoveClock(moverWhite);
@@ -464,6 +469,31 @@ class GameController extends ChangeNotifier {
     _maybeCpuOfferDraw();
     notifyListeners();
     _checkGameEnd();
+  }
+
+  /// Event reactions: blunders / brilliance / checks / promotions.
+  void _reactToCpuMove(int evalBefore) {
+    final cpuWhite = !setup.playerIsWhite;
+    final after = evaluate(game);
+    final swingAgainstCpu =
+        cpuWhite ? evalBefore - after : after - evalBefore;
+    if (swingAgainstCpu >= 300 && _rng.nextDouble() < 0.3) {
+      chatEngine.phraseFor(BotEvent.blunder).then(_pushOppChat);
+    } else if (game.inCheck() && _rng.nextDouble() < 0.2) {
+      chatEngine.phraseFor(BotEvent.checkGiven).then(_pushOppChat);
+    }
+  }
+
+  void _reactToPlayerMove(ChessMove m, int evalBefore) {
+    final playerWhite = setup.playerIsWhite;
+    final after = evaluate(game);
+    final swingForPlayer =
+        playerWhite ? after - evalBefore : evalBefore - after;
+    if (m.promotion != 0 && _rng.nextDouble() < 0.4) {
+      chatEngine.phraseFor(BotEvent.playerPromotion).then(_pushOppChat);
+    } else if (swingForPlayer >= 300 && _rng.nextDouble() < 0.3) {
+      chatEngine.phraseFor(BotEvent.brilliant).then(_pushOppChat);
+    }
   }
 
   /// CPU offers a draw in a dead-drawn late position (once per game).
@@ -475,7 +505,7 @@ class GameController extends ChangeNotifier {
     if (s.abs() < 15) {
       cpuDrawOffered = true;
       cpuDrawOffer = true;
-      _scheduleOppChat('I think this is a draw 🤝', 800);
+      chatEngine.phraseFor(BotEvent.drawOffered).then(_pushOppChat);
     }
   }
 
@@ -527,6 +557,14 @@ class GameController extends ChangeNotifier {
         }
       } else if (idleAbortRemaining != null) {
         idleAbortRemaining = null;
+      }
+      // Bot complains once when its clock runs low.
+      if (!_lowTimeSaid) {
+        final cpuMs = !setup.playerIsWhite ? whiteMs : blackMs;
+        if (cpuMs < 10000) {
+          _lowTimeSaid = true;
+          chatEngine.phraseFor(BotEvent.lowTime).then(_pushOppChat);
+        }
       }
       if (game.whiteToMove) {
         whiteMs -= dt;
@@ -595,37 +633,24 @@ class GameController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _scheduleOppChat(String text, int delayMs) {
-    Future.delayed(Duration(milliseconds: delayMs), () {
-      if (isGameOver && text.contains('gl')) return;
-      chat.add(ChatMsg(mine: false, text: text));
-      unread++;
-      notifyListeners();
-    });
+  void _pushOppChat(String text) {
+    if (text.isEmpty) return;
+    chat.add(ChatMsg(mine: false, text: text));
+    unread++;
+    notifyListeners();
   }
 
-  /// Player quick-reply; the opponent answers in character — chess-context
-  /// lines use word-boundary triggers, everything else goes to the ELIZA
-  /// brain so conversations never feel canned.
+  /// Player message → contextual bot reply (ML Kit Smart Reply →
+  /// ELIZA → matrix). Chess-context shortcuts stay on topic.
   void sendChat(String text) {
     chat.add(ChatMsg(mine: true, text: text));
     notifyListeners();
     final t = text.toLowerCase();
-    String? reply;
-    if (RegExp(r'\b(gl|hf|good luck)\b').hasMatch(t)) {
-      reply = 'good luck, have fun 🙂';
-    } else if (RegExp(r'\b(gg|wp|well played)\b').hasMatch(t)) {
-      reply = _brain.farewell();
-    } else if (RegExp(r'\bdraw\b').hasMatch(t)) {
-      reply = 'let’s play on for now 😄';
-    } else if (RegExp(r'\b(nice|great|wow|good move)\b').hasMatch(t)) {
-      reply = 'thanks! you too!';
-    } else if (RegExp(r'\b(hi|hello|hey)\b').hasMatch(t)) {
-      reply = _brain.greeting();
+    if (RegExp(r'\bdraw\b').hasMatch(t)) {
+      chatEngine.phraseFor(BotEvent.drawOffered).then(_pushOppChat);
     } else {
-      reply = _brain.reply(text) ?? 'interesting! your move 😄';
+      chatEngine.replyTo(text).then(_pushOppChat);
     }
-    _scheduleOppChat(reply, 1200 + _rng.nextInt(1600));
   }
 
   // ------------------------------------------------------------------ end
@@ -740,7 +765,10 @@ class GameController extends ChangeNotifier {
     } else {
       SoundService.gameEnd();
     }
-    _scheduleOppChat(_brain.farewell(), 900);
+    final ev = playerScore == 1
+        ? BotEvent.loss
+        : (playerScore == 0.5 ? BotEvent.draw : BotEvent.win);
+    chatEngine.phraseFor(ev).then(_pushOppChat);
     var delta = 0;
     var earned = 0;
     if (!abort && setup.rated) {
@@ -795,6 +823,7 @@ class GameController extends ChangeNotifier {
   void dispose() {
     _thinkToken++;
     _timer?.cancel();
+    chatEngine.dispose();
     super.dispose();
   }
 }

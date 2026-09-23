@@ -85,6 +85,11 @@ Docs: [ARCHITECTURE](docs/ARCHITECTURE.md) · [CPU_ENGINE](docs/CPU_ENGINE.md) �
 - **CPU safety**: repetition-aware search (no sleepy threefolds while
   winning), clock-scaled think budgets (never self-flags in Bullet),
   unrated aborts when resigning before your first move, and draw offers.
+- **v8 (HybridBotChatEngine)**: contextual bot chat via standalone
+  `google_mlkit_smart_reply` (not the 100 MB monolith) → ELIZA → casual
+  female-biased event matrix (blunders, low time, checks, promotions,
+  results), all behind human typing delays; Android size strategy in
+  `docs/ANDROID_SIZE.md` (ABI filter + AAB + R8 + proguard).
 - **v7 (dependency-driven identity + chat)**: opponent names now generated
   by `random_name_generator` (75% female, localized per zone with
   culture-matched flags) — no static pools; bot chat runs on the offline
