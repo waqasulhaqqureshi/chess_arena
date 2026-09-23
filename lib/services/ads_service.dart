@@ -22,7 +22,8 @@ class AdsService {
       );
       return;
     }
-    // TODO(ads): load + show google_mobile_ads InterstitialAd here.
+    // ROADMAP(ads): load + show a google_mobile_ads InterstitialAd here
+    // once ad units are wired (see docs/ADS_AND_ONLINE_ROADMAP.md).
     debugPrint('[Ads] ADS_ENABLED=true but no ad units wired yet.');
   }
 
