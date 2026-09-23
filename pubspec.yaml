@@ -1,5 +1,5 @@
 name: chess_arena
-description: "A new Flutter project."
+description: "Chess Arena - play vs CPU (ELO-scaled), puzzles, rankings. Local-first with Hive, Supabase-ready."
 publish_to: 'none'
 version: 0.1.0+1
 
@@ -9,6 +9,22 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  provider: ">=6.0.0 <7.0.0"
+  hive: ">=2.2.0 <3.0.0"
+  hive_flutter: ">=1.1.0 <2.0.0"
+  audioplayers: ">=5.2.0 <7.0.0"
+  supabase_flutter: ">=2.0.0 <3.0.0"
+  chess_vectors_flutter: ">=1.1.0 <2.0.0"
+  chess_interface: ">=1.2.1 <2.0.0"   # bundled fillable piece PNGs (modern_minimalist)
+  random_avatar: ">=0.0.8 <1.0.0"     # offline Multiavatar identicons
+  country_pickers: ">=3.0.1 <4.0.0"   # real flag picker dialog
+  stockfish: ">=1.8.1 <2.0.0"         # native engine (Android/iOS) via FFI
+  random_name_generator: ">=1.5.0 <2.0.0" # localized human names per zone
+  eliza_chat: ">=1.0.1 <2.0.0"        # offline ELIZA conversational brain
+  # Standalone ML Kit Smart Reply (NOT the monolithic google_ml_kit,
+  # which bloats 100 MB+). Contextual on-device replies, Android/iOS only.
+  google_mlkit_smart_reply: ">=0.15.1 <1.0.0"
+  flutter_svg: ">=2.0.0 <3.0.0"
 
 dev_dependencies:
   flutter_test:
@@ -17,3 +33,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/sounds/
+    - assets/icons/
+    - assets/img/

@@ -1,0 +1,506 @@
+/// Friends / Profile / Watch / Highlights tabs.
+///
+/// Social + spectating features are online-dependent; these screens are
+/// polished placeholders that light up once Supabase matchmaking lands.
+library;
+
+import 'package:flutter/material.dart';
+import 'package:chess_vectors_flutter/chess_vectors_flutter.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:provider/provider.dart';
+
+import '../../core/theme/app_theme.dart';
+import '../../data/local/database.dart';
+import '../../data/remote/supabase_service.dart';
+import '../../data/repository/arena_repository.dart';
+import '../../services/sound_service.dart';
+import '../dialogs/app_dialogs.dart';
+import '../widgets/app_widgets.dart';
+import '../widgets/piece_widget.dart';
+
+// ---------------------------------------------------------------- friends
+
+class FriendsScreen extends StatelessWidget {
+  const FriendsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Friends', style: AppTheme.title22),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              decoration: BoxDecoration(
+                color: AppColors.card,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const TextField(
+                enabled: false,
+                decoration: InputDecoration(
+                  hintText: 'Search players… (online soon)',
+                  border: InputBorder.none,
+                  icon: Icon(Icons.search, color: AppColors.textDim),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Center(
+              child: Column(
+                children: [
+                  Icon(Icons.group, size: 64, color: AppColors.textDim),
+                  SizedBox(height: 12),
+                  Text(
+                    'No friends yet',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                  ),
+                  SizedBox(height: 6),
+                  Text(
+                    'Challenge friends and climb together\nonce online play lands.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppColors.textDim),
+                  ),
+                ],
+              ),
+            ),
+            const Spacer(),
+            ArenaButton(
+              label: 'Invite friends',
+              onPressed: () => showArenaSnack(context,
+                  'Invites arrive with the online update '),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------- profile
+
+class ProfileScreen extends StatelessWidget {
+  const ProfileScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    final repo = context.watch<ArenaRepository>();
+    final online = SupabaseService.isReady;
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Profile', style: AppTheme.title22),
+            const SizedBox(height: 12),
+            // Compact stats strip.
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _chip('${repo.rating}', 'rating'),
+                _chip('${repo.coins}', 'coins', coin: true),
+                _chip('${repo.games}', 'games'),
+                _chip('${repo.wins}W ${repo.draws}D ${repo.losses}L', 'record'),
+                _chip('${repo.streak} streak', 'form'),
+              ],
+            ),
+            const SizedBox(height: 16),
+            const SectionLabel('Personalization'),
+            const SizedBox(height: 8),
+            ArenaCard(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  _profileRow(
+                    context,
+                    icon: Icons.palette,
+                    iconColor: const Color(0xFF9B7BF5),
+                    title: 'Customize',
+                    subtitle: 'Avatar, board, pieces',
+                    onTap: () => showCustomizeSheet(context),
+                  ),
+                  const Divider(color: AppColors.divider, height: 1),
+                  _profileRow(
+                    context,
+                    icon: Icons.person,
+                    iconColor: const Color(0xFF3FA7FF),
+                    title: 'Account',
+                    subtitle: 'Manage your account',
+                    onTap: () => showArenaSnack(context,
+                        'Accounts arrive with the online update'),
+                  ),
+                  const Divider(color: AppColors.divider, height: 1),
+                  _profileRow(
+                    context,
+                    icon: Icons.lock,
+                    iconColor: AppColors.gold,
+                    title: 'Privacy',
+                    subtitle: 'Manage consent',
+                    onTap: () => showArenaSnack(context,
+                        'Consent manager arrives with ads integration'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            const SectionLabel('Help and feedback'),
+            const SizedBox(height: 8),
+            ArenaCard(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  _profileRow(
+                    context,
+                    icon: Icons.menu_book,
+                    iconColor: AppColors.green,
+                    title: 'Rules',
+                    subtitle: 'How to play chess',
+                    onTap: () => showRulesDialog(context),
+                  ),
+                  const Divider(color: AppColors.divider, height: 1),
+                  _profileRow(
+                    context,
+                    icon: Icons.bar_chart,
+                    iconColor: AppColors.orange,
+                    title: 'Community Poll',
+                    subtitle: 'Make your voice heard',
+                    onTap: () => showArenaSnack(
+                        context, 'Polls arrive with the online update'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            const SectionLabel('Remove ads'),
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: () => showArenaSnack(context,
+                  'Google Play billing arrives with the online update'),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [
+                    AppColors.orangeLight,
+                    AppColors.orangeDark
+                  ]),
+                  borderRadius: BorderRadius.circular(12),
+                  border: const Border(
+                      bottom:
+                          BorderSide(color: AppColors.orangeDeep, width: 3)),
+                ),
+                child: const Column(
+                  children: [
+                    Text(
+                      'Remove Ads – Rs 550.00 / month',
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Cancel anytime in Google Play',
+                      style: TextStyle(fontSize: 12, color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Center(
+              child: Text(
+                'By subscribing you agree to the Terms of Use\nand Privacy Policy.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: AppColors.textDim),
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Center(
+              child: Text(
+                'Terms of Use & Privacy Policy',
+                style: TextStyle(fontSize: 12, color: AppColors.textFaint),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'v 1.2.0 · ${online ? 'Supabase online' : 'offline mode'}',
+              style: AppTheme.dim12,
+            ),
+            const SizedBox(height: 14),
+            ArenaCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SectionLabel('Recent games'),
+                  const SizedBox(height: 8),
+                  ..._recentGames(),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            ArenaButton(
+              label: 'Create Account',
+              subtitle: 'Sync rating & games to the cloud',
+              onPressed: () => showArenaSnack(context,
+                  'Accounts arrive with the online update '),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _chip(String value, String label, {bool coin = false}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (coin) ...[
+            SvgPicture.asset('assets/icons/coin.svg', width: 14, height: 14),
+            const SizedBox(width: 4),
+          ],
+          Text(value,
+              style: const TextStyle(
+                  fontSize: 13, fontWeight: FontWeight.w800)),
+          const SizedBox(width: 6),
+          Text(label, style: AppTheme.dim12),
+        ],
+      ),
+    );
+  }
+
+  Widget _profileRow(
+    BuildContext context, {
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: () {
+        SoundService.click();
+        onTap();
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.22),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 22, color: iconColor),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w800)),
+                  Text(subtitle, style: AppTheme.dim12),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right,
+                color: AppColors.textDim, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+
+
+  List<Widget> _recentGames() {
+    final games = Database.recentGames(limit: 5);
+    if (games.isEmpty) {
+      return [
+        Text('No games yet — go play!', style: AppTheme.dim13),
+      ];
+    }
+    return games.map((g) {
+      final tag = g['result'] as String? ?? '?';
+      final icon = tag == 'w'
+          ? Icons.emoji_events
+          : tag == 'd'
+              ? Icons.handshake
+              : Icons.sentiment_dissatisfied;
+      final iconColor = tag == 'w'
+          ? AppColors.gold
+          : tag == 'd'
+              ? AppColors.textDim
+              : AppColors.red;
+      final delta =
+          ((g['ratingAfter'] as int?) ?? 0) - ((g['ratingBefore'] as int?) ?? 0);
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: iconColor),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'vs ${g['opponent']} (${g['opponentRating']})',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style:
+                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              ),
+            ),
+            Text(
+              '${delta >= 0 ? '+' : ''}$delta',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w800,
+                color: delta >= 0
+                    ? AppColors.greenBright
+                    : AppColors.red,
+              ),
+            ),
+          ],
+        ),
+      );
+    }).toList();
+  }
+}
+
+// ---------------------------------------------------------------- watch
+
+class WatchScreen extends StatelessWidget {
+  const WatchScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final repo = context.read<ArenaRepository>();
+    final games = List.generate(4, (i) {
+      final a = repo.randomSimulatedOpponent(1500 + i * 120);
+      final b = repo.randomSimulatedOpponent(1500 + i * 120);
+      return {'a': a, 'b': b};
+    });
+    return Scaffold(
+      appBar: AppBar(title: const Text('Watch')),
+      body: ArenaBackground(
+        child: ListView.separated(
+          padding: const EdgeInsets.all(12),
+          itemCount: games.length,
+          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          itemBuilder: (_, i) {
+            final g = games[i];
+            final a = g['a']! as Map<String, Object?>;
+            final b = g['b']! as Map<String, Object?>;
+            return ArenaCard(
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.fiber_manual_record, color: AppColors.red, size: 18),
+                title: Text(
+                  '${a['name']}  vs  ${b['name']}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                subtitle: Text(
+                    '${a['rating']} · ${b['rating']} · Blitz',
+                    style: AppTheme.dim13),
+                trailing: const Icon(Icons.play_circle_fill,
+                    color: AppColors.orange, size: 30),
+                onTap: () => showArenaSnack(context,
+                    'Spectating arrives with the online update '),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------- highlights
+
+class HighlightsScreen extends StatelessWidget {
+  const HighlightsScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Highlights')),
+      body: ArenaBackground(
+        child: ListView(
+          padding: const EdgeInsets.all(12),
+          children: const [
+            _HighlightCard(
+              thumb: const BlackKnight(size: 30),
+              title: 'Brilliant knight sacrifice',
+              subtitle: 'GM Carlsen · 2h ago · 12K views',
+            ),
+            _HighlightCard(
+              thumb: const Icon(Icons.workspace_premium, size: 30, color: AppColors.gold),
+              title: 'Queen odds comeback',
+              subtitle: 'Nightingale · 5h ago · 8K views',
+            ),
+            _HighlightCard(
+              thumb: const Icon(Icons.local_fire_department, size: 30, color: AppColors.orange),
+              title: 'Fastest mate of the day — 9 moves!',
+              subtitle: 'pawnstormer · 1d ago · 31K views',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HighlightCard extends StatelessWidget {
+  final Widget thumb;
+  final String title;
+  final String subtitle;
+  const _HighlightCard(
+      {required this.thumb, required this.title, required this.subtitle});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: ArenaCard(
+        child: ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: Container(
+            width: 52,
+            height: 52,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: AppColors.cardLight,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: thumb,
+          ),
+          title: Text(title,
+              style: const TextStyle(fontWeight: FontWeight.w800)),
+          subtitle: Text(subtitle, style: AppTheme.dim13),
+          trailing: const Icon(Icons.play_circle_fill,
+              color: AppColors.orange, size: 30),
+          onTap: () => showArenaSnack(
+              context, 'Replays arrive with the online update '),
+        ),
+      ),
+    );
+  }
+}

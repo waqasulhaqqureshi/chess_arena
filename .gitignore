@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Secrets — never commit real keys. Use --dart-define (see .env.example).
+.env
+.env.*
+!.env.example
