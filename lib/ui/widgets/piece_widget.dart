@@ -75,11 +75,7 @@ class PieceWidget extends StatelessWidget {
       height: size,
       decoration: const BoxDecoration(
         boxShadow: [
-          BoxShadow(
-            color: Colors.black38,
-            blurRadius: 3,
-            offset: Offset(0, 2),
-          ),
+          BoxShadow(color: Colors.black38, blurRadius: 3, offset: Offset(0, 2)),
         ],
       ),
       child: Image.asset(
@@ -91,7 +87,7 @@ class PieceWidget extends StatelessWidget {
         // turns it into a white or a black piece.
         color: white ? AppColors.whitePiece : AppColors.blackPiece,
         colorBlendMode: BlendMode.srcIn,
-        errorBuilder: (_, __, ___) => _vector(white),
+        errorBuilder: (_, _, _) => _vector(white),
       ),
     );
   }
@@ -143,15 +139,13 @@ class AvatarWidget extends StatelessWidget {
             child: isCpu
                 ? Container(
                     color: const Color(0xFF3A3A3A),
-                    child: Icon(Icons.smart_toy,
-                        size: radius * 1.1, color: Colors.white),
+                    child: Icon(
+                      Icons.smart_toy,
+                      size: radius * 1.1,
+                      color: Colors.white,
+                    ),
                   )
-                : RandomAvatar(
-                    name,
-                    trBackground: true,
-                    width: d,
-                    height: d,
-                  ),
+                : RandomAvatar(name, trBackground: true, width: d, height: d),
           ),
         ),
         if (!isCpu)

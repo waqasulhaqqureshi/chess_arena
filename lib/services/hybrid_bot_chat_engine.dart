@@ -96,11 +96,7 @@ class HybridBotChatEngine {
       'brb panicking lol',
       'ok ok thinking thinking!!',
     ],
-    BotEvent.checkGiven: [
-      'check!! 👀',
-      'oops check hehe',
-      'watch the king 👑',
-    ],
+    BotEvent.checkGiven: ['check!! 👀', 'oops check hehe', 'watch the king 👑'],
     BotEvent.playerPromotion: [
       'of course the queen 😒',
       'omg another queen wow',
@@ -121,10 +117,7 @@ class HybridBotChatEngine {
       'gg wp!! that was intense',
       'nooo gg, rematch pls 🙏',
     ],
-    BotEvent.draw: [
-      'ok draw it is 🤝 gg!',
-      'gg, fair enough 🤝',
-    ],
+    BotEvent.draw: ['ok draw it is 🤝 gg!', 'gg, fair enough 🤝'],
     BotEvent.smalltalk: [
       'lol true',
       'haha yeah 😄',
@@ -154,7 +147,10 @@ class HybridBotChatEngine {
     if (sr == null) return;
     try {
       sr.addMessageToConversationFromRemoteUser(
-          text, DateTime.now().millisecondsSinceEpoch, 'player');
+        text,
+        DateTime.now().millisecondsSinceEpoch,
+        'player',
+      );
     } catch (e) {
       debugPrint('[Chat] ml feed failed: $e');
       _mlAvailable = false;
@@ -166,7 +162,9 @@ class HybridBotChatEngine {
     if (sr == null) return;
     try {
       sr.addMessageToConversationFromLocalUser(
-          text, DateTime.now().millisecondsSinceEpoch);
+        text,
+        DateTime.now().millisecondsSinceEpoch,
+      );
     } catch (_) {}
   }
 
@@ -179,7 +177,7 @@ class HybridBotChatEngine {
       try {
         final res = await _sr!.suggestReplies();
         final opts = res.suggestions
-            .map((s) => '$s'.trim())
+            .map((s) => s.trim())
             .where((s) => s.isNotEmpty)
             .toList();
         if (opts.isNotEmpty) text = opts[_rng.nextInt(opts.length)];

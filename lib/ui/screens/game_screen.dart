@@ -63,7 +63,12 @@ class _TopState {
   final int unread;
   final bool drawOffer;
   const _TopState(
-      this.thinking, this.over, this.canTakeback, this.unread, this.drawOffer);
+    this.thinking,
+    this.over,
+    this.canTakeback,
+    this.unread,
+    this.drawOffer,
+  );
 
   @override
   bool operator ==(Object o) =>
@@ -121,8 +126,13 @@ class _BoardView {
     required this.pieceImages,
   });
 
-  factory _BoardView.from(GameController c, bool showLast, bool animate,
-      int themeIdx, bool pieceImages) {
+  factory _BoardView.from(
+    GameController c,
+    bool showLast,
+    bool animate,
+    int themeIdx,
+    bool pieceImages,
+  ) {
     return _BoardView(
       len: c.game.moveHistory.length,
       sel: c.selected,
@@ -158,8 +168,19 @@ class _BoardView {
       pieceImages == o.pieceImages;
 
   @override
-  int get hashCode => Object.hash(len, sel, targets, lastFrom, lastTo, check,
-      pendF, pendT, showLast, themeIdx, pieceImages);
+  int get hashCode => Object.hash(
+    len,
+    sel,
+    targets,
+    lastFrom,
+    lastTo,
+    check,
+    pendF,
+    pendT,
+    showLast,
+    themeIdx,
+    pieceImages,
+  );
 }
 
 class _InfoView {
@@ -252,8 +273,11 @@ class _GameBodyState extends State<_GameBody> {
       _overOpen = true;
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!mounted || c.gameOverInfo == null) return;
-        final action =
-            await showGameOverDialog(context, c.gameOverInfo!, c.setup);
+        final action = await showGameOverDialog(
+          context,
+          c.gameOverInfo!,
+          c.setup,
+        );
         if (!mounted) return;
         if (action == 'rematch') {
           final setup = c.setup;
@@ -299,9 +323,14 @@ class _GameBodyState extends State<_GameBody> {
               Column(
                 children: [
                   Selector<GameController, _TopState>(
-                    selector: (_, c) => _TopState(c.cpuThinking, c.isGameOver,
-                        c.canTakeback, c.unread, c.cpuDrawOffer),
-                    builder: (_, v, __) => _topBar(context, v),
+                    selector: (_, c) => _TopState(
+                      c.cpuThinking,
+                      c.isGameOver,
+                      c.canTakeback,
+                      c.unread,
+                      c.cpuDrawOffer,
+                    ),
+                    builder: (_, v, _) => _topBar(context, v),
                   ),
                   // Opponent bar (rebuilds on clock ticks only).
                   Selector<GameController, _ClockView>(
@@ -311,7 +340,7 @@ class _GameBodyState extends State<_GameBody> {
                           c.game.whiteToMove == !setup.playerIsWhite,
                       !c.cpuHasMoved,
                     ),
-                    builder: (_, clock, __) => PlayerBar(
+                    builder: (_, clock, _) => PlayerBar(
                       name: setup.opponentName,
                       flag: setup.opponentFlag,
                       rating: setup.opponentRating,
@@ -322,35 +351,48 @@ class _GameBodyState extends State<_GameBody> {
                     ),
                   ),
                   Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 6,
+                    ),
                     child: RepaintBoundary(
-                      child: Selector2<GameController, SettingsController,
-                          _BoardView>(
-                        selector: (_, c, s) => _BoardView.from(c,
-                            s.showLastMove, s.pieceAnimation, s.boardTheme,
-                            s.pieceImages),
-                        builder: (_, v, __) {
-                          final c = context.read<GameController>();
-                          return ChessBoardWidget(
-                            game: c.game,
-                            orientationWhite: setup.playerIsWhite,
-                            onTap: c.tapSquare,
-                            selected: v.sel,
-                            selectedMoves: c.selectedMoves,
-                            lastMove: c.lastMove,
-                            checkSquare: v.check,
-                            pendingFrom: v.pendF,
-                            pendingTo: v.pendT,
-                            showLastMove: v.showLast,
-                            animate: v.animate,
-                            animKey: v.len,
-                            theme: BoardTheme.all[
-                                v.themeIdx.clamp(0, BoardTheme.all.length - 1)],
-                            pieceImages: v.pieceImages,
-                          );
-                        },
-                      ),
+                      child:
+                          Selector2<
+                            GameController,
+                            SettingsController,
+                            _BoardView
+                          >(
+                            selector: (_, c, s) => _BoardView.from(
+                              c,
+                              s.showLastMove,
+                              s.pieceAnimation,
+                              s.boardTheme,
+                              s.pieceImages,
+                            ),
+                            builder: (_, v, _) {
+                              final c = context.read<GameController>();
+                              return ChessBoardWidget(
+                                game: c.game,
+                                orientationWhite: setup.playerIsWhite,
+                                onTap: c.tapSquare,
+                                selected: v.sel,
+                                selectedMoves: c.selectedMoves,
+                                lastMove: c.lastMove,
+                                checkSquare: v.check,
+                                pendingFrom: v.pendF,
+                                pendingTo: v.pendT,
+                                showLastMove: v.showLast,
+                                animate: v.animate,
+                                animKey: v.len,
+                                theme:
+                                    BoardTheme.all[v.themeIdx.clamp(
+                                      0,
+                                      BoardTheme.all.length - 1,
+                                    )],
+                                pieceImages: v.pieceImages,
+                              );
+                            },
+                          ),
                     ),
                   ),
                   // Player bar (rebuilds on clock ticks only).
@@ -361,7 +403,7 @@ class _GameBodyState extends State<_GameBody> {
                           c.game.whiteToMove == setup.playerIsWhite,
                       !c.playerHasMoved,
                     ),
-                    builder: (_, clock, __) {
+                    builder: (_, clock, _) {
                       final repo = context.watch<ArenaRepository>();
                       return PlayerBar(
                         name: '${repo.name} (You)',
@@ -377,7 +419,7 @@ class _GameBodyState extends State<_GameBody> {
                   Expanded(
                     child: Selector<GameController, _InfoView>(
                       selector: (_, c) => _InfoView.from(c),
-                      builder: (_, v, __) => _infoPanel(context, v),
+                      builder: (_, v, _) => _infoPanel(context, v),
                     ),
                   ),
                   if (AdsService.showBannerPlaceholder)
@@ -393,8 +435,11 @@ class _GameBodyState extends State<_GameBody> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.movie_filter,
-                              size: 14, color: AppColors.textDim),
+                          Icon(
+                            Icons.movie_filter,
+                            size: 14,
+                            color: AppColors.textDim,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             'Ad banner placeholder (google_mobile_ads)',
@@ -408,11 +453,11 @@ class _GameBodyState extends State<_GameBody> {
               // No-show abort countdown overlay (video parity).
               Selector<GameController, int?>(
                 selector: (_, c) => c.idleAbortRemaining,
-                builder: (_, remain, __) {
+                builder: (_, remain, _) {
                   if (remain == null) return const SizedBox.shrink();
                   return Positioned.fill(
                     child: Container(
-                      color: Colors.black.withOpacity(0.6),
+                      color: Colors.black.withValues(alpha: 0.6),
                       child: Center(
                         child: Container(
                           margin: const EdgeInsets.symmetric(horizontal: 40),
@@ -427,16 +472,21 @@ class _GameBodyState extends State<_GameBody> {
                               const Text(
                                 'Waiting for opponent',
                                 style: TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.w800),
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                ),
                               ),
                               const SizedBox(height: 12),
                               const CircularProgressIndicator(
-                                  color: Colors.white),
+                                color: Colors.white,
+                              ),
                               const SizedBox(height: 12),
                               Text(
                                 'Aborting game in $remain..',
                                 style: const TextStyle(
-                                    fontSize: 13, fontWeight: FontWeight.w700),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
                             ],
                           ),
@@ -483,8 +533,10 @@ class _GameBodyState extends State<_GameBody> {
                         color: AppColors.red,
                         shape: BoxShape.circle,
                       ),
-                      child: Text('${v.unread}',
-                          style: const TextStyle(fontSize: 9)),
+                      child: Text(
+                        '${v.unread}',
+                        style: const TextStyle(fontSize: 9),
+                      ),
                     ),
                   ),
               ],
@@ -549,16 +601,19 @@ class _GameBodyState extends State<_GameBody> {
                   child: Text(
                     v.status,
                     style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.w800),
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
                 if (myDiff != 0)
                   Text(
                     '${myDiff > 0 ? '+' : ''}$myDiff',
                     style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.gold),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.gold,
+                    ),
                   ),
               ],
             ),
@@ -578,7 +633,9 @@ class _GameBodyState extends State<_GameBody> {
                 child: Text(
                   _movesText(c.game),
                   style: const TextStyle(
-                      fontSize: 13, fontWeight: FontWeight.w600),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
           ],
@@ -603,8 +660,7 @@ class _GameBodyState extends State<_GameBody> {
           child: Wrap(
             spacing: 0,
             runSpacing: 0,
-            children:
-                caps.map((p) => PieceWidget(piece: p, size: 20)).toList(),
+            children: caps.map((p) => PieceWidget(piece: p, size: 20)).toList(),
           ),
         ),
       ],
@@ -624,8 +680,7 @@ class _GameBodyState extends State<_GameBody> {
     return sb.toString();
   }
 
-  Future<void> _confirmResign(
-      BuildContext context, GameController c) async {
+  Future<void> _confirmResign(BuildContext context, GameController c) async {
     final played = c.playerHasMoved || c.cpuHasMoved;
     final yes = await showVideoConfirm(
       context,
@@ -639,8 +694,7 @@ class _GameBodyState extends State<_GameBody> {
     if (yes == true) await c.resign();
   }
 
-  Future<void> _confirmExit(
-      BuildContext context, GameController c) async {
+  Future<void> _confirmExit(BuildContext context, GameController c) async {
     if (c.isGameOver) {
       Navigator.of(context).pop();
       return;

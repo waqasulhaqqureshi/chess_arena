@@ -55,7 +55,8 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
     final setup = GameSetup.fromJson(
-        (snap['setup'] as Map).cast<String, Object?>());
+      (snap['setup'] as Map).cast<String, Object?>(),
+    );
     final yes = await showVideoConfirm(
       context,
       title: 'Resume game?',
@@ -66,9 +67,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
     if (!mounted) return;
     if (yes == true) {
-      Navigator.of(context).push(MaterialPageRoute(
-        builder: (_) => ResumedGameScreen(snapshot: snap),
-      ));
+      Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => ResumedGameScreen(snapshot: snap)),
+      );
     } else {
       repo.clearLiveGame();
     }
@@ -108,12 +109,16 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Text(
                 repo.name,
-                style:
-                    const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               GestureDetector(
                 onTap: () => showArenaSnack(
-                    context, 'Accounts arrive with the online update'),
+                  context,
+                  'Accounts arrive with the online update',
+                ),
                 child: const Row(
                   children: [
                     Icon(Icons.circle, size: 8, color: AppColors.greenBright),
@@ -157,8 +162,7 @@ class _HomeScreenState extends State<HomeScreen> {
             icon: Icons.emoji_events,
             iconColor: AppColors.gold,
             title: 'Daily game',
-            subtitle:
-                '${repo.streak} day streak · longer streaks pay more',
+            subtitle: '${repo.streak} day streak · longer streaks pay more',
             trailing: repo.dailyGameDone
                 ? _doneCheck()
                 : _smallButton(context, 'Play', () {
@@ -173,8 +177,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         opponentRating: d.targetElo,
                         difficulty: d,
                         playerIsWhite: true,
-                        timeControl: timeControlById(
-                            repo.timeControls.first),
+                        timeControl: timeControlById(repo.timeControls.first),
                       ),
                     );
                   }),
@@ -190,9 +193,11 @@ class _HomeScreenState extends State<HomeScreen> {
             trailing: repo.dailyPuzzleDone
                 ? _doneCheck()
                 : _smallButton(context, 'Solve', () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => const PuzzleScreen(daily: true),
-                    ));
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const PuzzleScreen(daily: true),
+                      ),
+                    );
                   }),
           ),
           const Divider(color: AppColors.divider),
@@ -207,8 +212,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? _smallButton(context, 'Claim ›', () async {
                     final ok = await repo.claimMission();
                     if (context.mounted) {
-                      showArenaSnack(context,
-                          ok ? '+25 coins!' : 'Play a rated game first');
+                      showArenaSnack(
+                        context,
+                        ok ? '+25 coins!' : 'Play a rated game first',
+                      );
                     }
                   })
                 : _smallButton(context, 'Claim ›', null),
@@ -232,7 +239,7 @@ class _HomeScreenState extends State<HomeScreen> {
           height: 44,
           alignment: Alignment.center,
           decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.18),
+            color: iconColor.withValues(alpha: 0.18),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(icon, size: 26, color: iconColor),
@@ -242,12 +249,17 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title,
-                  style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w800)),
-              Text(subtitle,
-                  style: const TextStyle(
-                      fontSize: 12, color: AppColors.textDim)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              Text(
+                subtitle,
+                style: const TextStyle(fontSize: 12, color: AppColors.textDim),
+              ),
             ],
           ),
         ),
@@ -267,8 +279,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _smallButton(
-      BuildContext context, String label, VoidCallback? onTap) {
+  Widget _smallButton(BuildContext context, String label, VoidCallback? onTap) {
     return GestureDetector(
       onTap: onTap == null
           ? null
@@ -279,22 +290,23 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Opacity(
         opacity: onTap == null ? 0.45 : 1,
         child: Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: [
-              AppColors.orangeLight,
-              AppColors.orangeDark
-            ]),
+            gradient: const LinearGradient(
+              colors: [AppColors.orangeLight, AppColors.orangeDark],
+            ),
             borderRadius: BorderRadius.circular(20),
             border: const Border(
-                bottom:
-                    BorderSide(color: AppColors.orangeDeep, width: 3)),
+              bottom: BorderSide(color: AppColors.orangeDeep, width: 3),
+            ),
           ),
           child: Text(
             label,
             style: const TextStyle(
-                fontSize: 13, fontWeight: FontWeight.w800, color: Colors.white),
+              fontSize: 13,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
           ),
         ),
       ),
@@ -315,7 +327,9 @@ class _HomeScreenState extends State<HomeScreen> {
               const Spacer(),
               Container(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 10, vertical: 4),
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: AppColors.cardDark,
                   borderRadius: BorderRadius.circular(12),
@@ -342,13 +356,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         Text(
                           '${repo.rating}',
                           style: const TextStyle(
-                              fontSize: 34, fontWeight: FontWeight.w800),
+                            fontSize: 34,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                         if (lastDelta != null) ...[
                           const SizedBox(width: 6),
                           Padding(
-                            padding:
-                                const EdgeInsets.only(bottom: 6),
+                            padding: const EdgeInsets.only(bottom: 6),
                             child: Text(
                               '${lastDelta >= 0 ? '+' : ''}$lastDelta',
                               style: TextStyle(
@@ -407,8 +422,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 color: Colors.black26,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.person_search,
-                  size: 28, color: Colors.white),
+              child: const Icon(
+                Icons.person_search,
+                size: 28,
+                color: Colors.white,
+              ),
             ),
             onPressed: () => _findOpponent(context, repo),
           ),
@@ -448,8 +466,8 @@ class _HomeScreenState extends State<HomeScreen> {
         final c = r == 'w'
             ? AppColors.greenBright
             : r == 'd'
-                ? Colors.grey
-                : AppColors.red;
+            ? Colors.grey
+            : AppColors.red;
         return Container(
           width: 10,
           height: 10,
@@ -469,32 +487,36 @@ class _HomeScreenState extends State<HomeScreen> {
     return Wrap(
       spacing: 4,
       children: [
-        ...shown.map((e) => Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: AppColors.cardLight,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: SvgPicture.asset(e, width: 22, height: 22),
-            )),
-        if (extra > 0)
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
+        ...shown.map(
+          (e) => Container(
+            padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
               color: AppColors.cardLight,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Text('+$extra',
-                style:
-                    const TextStyle(fontSize: 14, fontWeight: FontWeight.w800)),
+            child: SvgPicture.asset(e, width: 22, height: 22),
+          ),
+        ),
+        if (extra > 0)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
+            decoration: BoxDecoration(
+              color: AppColors.cardLight,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              '+$extra',
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+            ),
           ),
       ],
     );
   }
 
   Future<void> _editTimeControls(
-      BuildContext context, ArenaRepository repo) async {
+    BuildContext context,
+    ArenaRepository repo,
+  ) async {
     SoundService.click();
     final sel = await showTimeControlsSheet(context, repo.timeControls);
     if (sel != null && sel.isNotEmpty) {
@@ -512,32 +534,50 @@ class _HomeScreenState extends State<HomeScreen> {
           Row(
             children: [
               Expanded(
-                  child: _gridCell(context, 'assets/img/tile_cpu.png', 'Play CPU',
-                      onTap: () => _playCpu(context, repo))),
+                child: _gridCell(
+                  context,
+                  'assets/img/tile_cpu.png',
+                  'Play CPU',
+                  onTap: () => _playCpu(context, repo),
+                ),
+              ),
               Container(width: 1, height: 84, color: AppColors.divider),
               Expanded(
-                  child: _gridCell(context, 'assets/img/tile_puzzles.png', 'Puzzles',
-                      onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (_) =>
-                                  const PuzzleListScreen())))),
+                child: _gridCell(
+                  context,
+                  'assets/img/tile_puzzles.png',
+                  'Puzzles',
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const PuzzleListScreen()),
+                  ),
+                ),
+              ),
             ],
           ),
           Container(height: 1, color: AppColors.divider),
           Row(
             children: [
               Expanded(
-                  child: _gridCell(context, 'assets/img/tile_watch.png', 'Watch',
-                      onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (_) => const WatchScreen())))),
+                child: _gridCell(
+                  context,
+                  'assets/img/tile_watch.png',
+                  'Watch',
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const WatchScreen()),
+                  ),
+                ),
+              ),
               Container(width: 1, height: 84, color: AppColors.divider),
               Expanded(
-                  child: _gridCell(context, 'assets/img/tile_highlights.png', 'Highlights',
-                      onTap: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (_) =>
-                                  const HighlightsScreen())))),
+                child: _gridCell(
+                  context,
+                  'assets/img/tile_highlights.png',
+                  'Highlights',
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const HighlightsScreen()),
+                  ),
+                ),
+              ),
             ],
           ),
         ],
@@ -545,8 +585,12 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _gridCell(BuildContext context, String img, String label,
-      {required VoidCallback onTap}) {
+  Widget _gridCell(
+    BuildContext context,
+    String img,
+    String label, {
+    required VoidCallback onTap,
+  }) {
     return InkWell(
       onTap: () {
         SoundService.click();
@@ -559,19 +603,24 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
-              child: Image.asset(img, width: 46, height: 46, fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => Container(
-                        width: 46,
-                        height: 46,
-                        color: AppColors.cardLight,
-                        child: const Icon(Icons.extension,
-                            color: Colors.white),
-                      )),
+              child: Image.asset(
+                img,
+                width: 46,
+                height: 46,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => Container(
+                  width: 46,
+                  height: 46,
+                  color: AppColors.cardLight,
+                  child: const Icon(Icons.extension, color: Colors.white),
+                ),
+              ),
             ),
             const SizedBox(width: 10),
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 16, fontWeight: FontWeight.w800)),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            ),
           ],
         ),
       ),
@@ -580,8 +629,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // -------------------------------------------------------------- actions
 
-  Future<void> _playCpu(
-      BuildContext context, ArenaRepository repo) async {
+  Future<void> _playCpu(BuildContext context, ArenaRepository repo) async {
     final choice = await showPlayCpuDialog(context);
     if (choice == null || !context.mounted) return;
     _startGame(
@@ -600,14 +648,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Future<void> _findOpponent(
-      BuildContext context, ArenaRepository repo) async {
+  Future<void> _findOpponent(BuildContext context, ArenaRepository repo) async {
     SoundService.click();
     if (!context.mounted) return;
     showDialog(
       context: context,
       barrierDismissible: false,
-      barrierColor: Colors.black.withOpacity(0.6),
+      barrierColor: Colors.black.withValues(alpha: 0.6),
       builder: (_) => Center(
         child: Container(
           margin: const EdgeInsets.symmetric(horizontal: 44),
@@ -617,7 +664,9 @@ class _HomeScreenState extends State<HomeScreen> {
             borderRadius: BorderRadius.circular(14),
             boxShadow: [
               BoxShadow(
-                  color: Colors.black.withOpacity(0.5), blurRadius: 16),
+                color: Colors.black.withValues(alpha: 0.5),
+                blurRadius: 16,
+              ),
             ],
           ),
           child: Column(
@@ -633,7 +682,9 @@ class _HomeScreenState extends State<HomeScreen> {
               Text(
                 'Matching near ${repo.rating} · real lobby online soon',
                 style: const TextStyle(
-                    fontSize: 12, fontWeight: FontWeight.w700),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                ),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -670,10 +721,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _startGame(
-      BuildContext context, ArenaRepository repo, GameSetup setup) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => GameScreen(setup: setup)),
-    );
+  void _startGame(BuildContext context, ArenaRepository repo, GameSetup setup) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => GameScreen(setup: setup)));
   }
 }

@@ -55,8 +55,7 @@ class FriendsScreen extends StatelessWidget {
                   SizedBox(height: 12),
                   Text(
                     'No friends yet',
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
                   ),
                   SizedBox(height: 6),
                   Text(
@@ -70,8 +69,10 @@ class FriendsScreen extends StatelessWidget {
             const Spacer(),
             ArenaButton(
               label: 'Invite friends',
-              onPressed: () => showArenaSnack(context,
-                  'Invites arrive with the online update '),
+              onPressed: () => showArenaSnack(
+                context,
+                'Invites arrive with the online update ',
+              ),
             ),
           ],
         ),
@@ -83,7 +84,7 @@ class FriendsScreen extends StatelessWidget {
 // ---------------------------------------------------------------- profile
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen();
+  const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -131,8 +132,10 @@ class ProfileScreen extends StatelessWidget {
                     iconColor: const Color(0xFF3FA7FF),
                     title: 'Account',
                     subtitle: 'Manage your account',
-                    onTap: () => showArenaSnack(context,
-                        'Accounts arrive with the online update'),
+                    onTap: () => showArenaSnack(
+                      context,
+                      'Accounts arrive with the online update',
+                    ),
                   ),
                   const Divider(color: AppColors.divider, height: 1),
                   _profileRow(
@@ -141,8 +144,10 @@ class ProfileScreen extends StatelessWidget {
                     iconColor: AppColors.gold,
                     title: 'Privacy',
                     subtitle: 'Manage consent',
-                    onTap: () => showArenaSnack(context,
-                        'Consent manager arrives with ads integration'),
+                    onTap: () => showArenaSnack(
+                      context,
+                      'Consent manager arrives with ads integration',
+                    ),
                   ),
                 ],
               ),
@@ -170,7 +175,9 @@ class ProfileScreen extends StatelessWidget {
                     title: 'Community Poll',
                     subtitle: 'Make your voice heard',
                     onTap: () => showArenaSnack(
-                        context, 'Polls arrive with the online update'),
+                      context,
+                      'Polls arrive with the online update',
+                    ),
                   ),
                 ],
               ),
@@ -179,29 +186,31 @@ class ProfileScreen extends StatelessWidget {
             const SectionLabel('Remove ads'),
             const SizedBox(height: 8),
             GestureDetector(
-              onTap: () => showArenaSnack(context,
-                  'Google Play billing arrives with the online update'),
+              onTap: () => showArenaSnack(
+                context,
+                'Google Play billing arrives with the online update',
+              ),
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(colors: [
-                    AppColors.orangeLight,
-                    AppColors.orangeDark
-                  ]),
+                  gradient: const LinearGradient(
+                    colors: [AppColors.orangeLight, AppColors.orangeDark],
+                  ),
                   borderRadius: BorderRadius.circular(12),
                   border: const Border(
-                      bottom:
-                          BorderSide(color: AppColors.orangeDeep, width: 3)),
+                    bottom: BorderSide(color: AppColors.orangeDeep, width: 3),
+                  ),
                 ),
                 child: const Column(
                   children: [
                     Text(
                       'Remove Ads – Rs 550.00 / month',
                       style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.white),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                      ),
                     ),
                     SizedBox(height: 2),
                     Text(
@@ -247,8 +256,10 @@ class ProfileScreen extends StatelessWidget {
             ArenaButton(
               label: 'Create Account',
               subtitle: 'Sync rating & games to the cloud',
-              onPressed: () => showArenaSnack(context,
-                  'Accounts arrive with the online update '),
+              onPressed: () => showArenaSnack(
+                context,
+                'Accounts arrive with the online update ',
+              ),
             ),
           ],
         ),
@@ -270,9 +281,10 @@ class ProfileScreen extends StatelessWidget {
             SvgPicture.asset('assets/icons/coin.svg', width: 14, height: 14),
             const SizedBox(width: 4),
           ],
-          Text(value,
-              style: const TextStyle(
-                  fontSize: 13, fontWeight: FontWeight.w800)),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+          ),
           const SizedBox(width: 6),
           Text(label, style: AppTheme.dim12),
         ],
@@ -302,7 +314,7 @@ class ProfileScreen extends StatelessWidget {
               height: 42,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: iconColor.withOpacity(0.22),
+                color: iconColor.withValues(alpha: 0.22),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, size: 22, color: iconColor),
@@ -312,44 +324,44 @@ class ProfileScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
-                      style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.w800)),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
                   Text(subtitle, style: AppTheme.dim12),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right,
-                color: AppColors.textDim, size: 20),
+            const Icon(Icons.chevron_right, color: AppColors.textDim, size: 20),
           ],
         ),
       ),
     );
   }
 
-
-
   List<Widget> _recentGames() {
     final games = Database.recentGames(limit: 5);
     if (games.isEmpty) {
-      return [
-        Text('No games yet — go play!', style: AppTheme.dim13),
-      ];
+      return [Text('No games yet — go play!', style: AppTheme.dim13)];
     }
     return games.map((g) {
       final tag = g['result'] as String? ?? '?';
       final icon = tag == 'w'
           ? Icons.emoji_events
           : tag == 'd'
-              ? Icons.handshake
-              : Icons.sentiment_dissatisfied;
+          ? Icons.handshake
+          : Icons.sentiment_dissatisfied;
       final iconColor = tag == 'w'
           ? AppColors.gold
           : tag == 'd'
-              ? AppColors.textDim
-              : AppColors.red;
+          ? AppColors.textDim
+          : AppColors.red;
       final delta =
-          ((g['ratingAfter'] as int?) ?? 0) - ((g['ratingBefore'] as int?) ?? 0);
+          ((g['ratingAfter'] as int?) ?? 0) -
+          ((g['ratingBefore'] as int?) ?? 0);
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
@@ -361,8 +373,10 @@ class ProfileScreen extends StatelessWidget {
                 'vs ${g['opponent']} (${g['opponentRating']})',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style:
-                    const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
             Text(
@@ -370,9 +384,7 @@ class ProfileScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w800,
-                color: delta >= 0
-                    ? AppColors.greenBright
-                    : AppColors.red,
+                color: delta >= 0 ? AppColors.greenBright : AppColors.red,
               ),
             ),
           ],
@@ -401,15 +413,19 @@ class WatchScreen extends StatelessWidget {
         child: ListView.separated(
           padding: const EdgeInsets.all(12),
           itemCount: games.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
+          separatorBuilder: (_, _) => const SizedBox(height: 8),
           itemBuilder: (_, i) {
             final g = games[i];
-            final a = g['a']! as Map<String, Object?>;
-            final b = g['b']! as Map<String, Object?>;
+            final a = g['a']!;
+            final b = g['b']!;
             return ArenaCard(
               child: ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.fiber_manual_record, color: AppColors.red, size: 18),
+                leading: const Icon(
+                  Icons.fiber_manual_record,
+                  color: AppColors.red,
+                  size: 18,
+                ),
                 title: Text(
                   '${a['name']}  vs  ${b['name']}',
                   maxLines: 1,
@@ -417,12 +433,18 @@ class WatchScreen extends StatelessWidget {
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 subtitle: Text(
-                    '${a['rating']} · ${b['rating']} · Blitz',
-                    style: AppTheme.dim13),
-                trailing: const Icon(Icons.play_circle_fill,
-                    color: AppColors.orange, size: 30),
-                onTap: () => showArenaSnack(context,
-                    'Spectating arrives with the online update '),
+                  '${a['rating']} · ${b['rating']} · Blitz',
+                  style: AppTheme.dim13,
+                ),
+                trailing: const Icon(
+                  Icons.play_circle_fill,
+                  color: AppColors.orange,
+                  size: 30,
+                ),
+                onTap: () => showArenaSnack(
+                  context,
+                  'Spectating arrives with the online update ',
+                ),
               ),
             );
           },
@@ -451,12 +473,20 @@ class HighlightsScreen extends StatelessWidget {
               subtitle: 'GM Carlsen · 2h ago · 12K views',
             ),
             _HighlightCard(
-              thumb: const Icon(Icons.workspace_premium, size: 30, color: AppColors.gold),
+              thumb: Icon(
+                Icons.workspace_premium,
+                size: 30,
+                color: AppColors.gold,
+              ),
               title: 'Queen odds comeback',
               subtitle: 'Nightingale · 5h ago · 8K views',
             ),
             _HighlightCard(
-              thumb: const Icon(Icons.local_fire_department, size: 30, color: AppColors.orange),
+              thumb: Icon(
+                Icons.local_fire_department,
+                size: 30,
+                color: AppColors.orange,
+              ),
               title: 'Fastest mate of the day — 9 moves!',
               subtitle: 'pawnstormer · 1d ago · 31K views',
             ),
@@ -471,8 +501,11 @@ class _HighlightCard extends StatelessWidget {
   final Widget thumb;
   final String title;
   final String subtitle;
-  const _HighlightCard(
-      {required this.thumb, required this.title, required this.subtitle});
+  const _HighlightCard({
+    required this.thumb,
+    required this.title,
+    required this.subtitle,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -491,13 +524,18 @@ class _HighlightCard extends StatelessWidget {
             ),
             child: thumb,
           ),
-          title: Text(title,
-              style: const TextStyle(fontWeight: FontWeight.w800)),
+          title: Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
           subtitle: Text(subtitle, style: AppTheme.dim13),
-          trailing: const Icon(Icons.play_circle_fill,
-              color: AppColors.orange, size: 30),
-          onTap: () => showArenaSnack(
-              context, 'Replays arrive with the online update '),
+          trailing: const Icon(
+            Icons.play_circle_fill,
+            color: AppColors.orange,
+            size: 30,
+          ),
+          onTap: () =>
+              showArenaSnack(context, 'Replays arrive with the online update '),
         ),
       ),
     );

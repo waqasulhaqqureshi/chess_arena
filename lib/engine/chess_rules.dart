@@ -15,6 +15,7 @@ library;
 class ChessMove {
   final int from;
   final int to;
+
   /// 0 = none, else piece type 2..5 (N, B, R, Q).
   final int promotion;
 
@@ -96,8 +97,16 @@ class _Undo {
   final bool wk, wq, bk, bq;
   final int ep;
   final int half;
-  _Undo(this.move, this.captured, this.wk, this.wq, this.bk, this.bq, this.ep,
-      this.half);
+  _Undo(
+    this.move,
+    this.captured,
+    this.wk,
+    this.wq,
+    this.bk,
+    this.bq,
+    this.ep,
+    this.half,
+  );
 }
 
 class ChessGame {
@@ -120,8 +129,9 @@ class ChessGame {
 
   ChessGame();
 
-  factory ChessGame.startingPosition() =>
-      ChessGame.fromFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+  factory ChessGame.startingPosition() => ChessGame.fromFen(
+    'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+  );
 
   factory ChessGame.fromFen(String fen) {
     final g = ChessGame();
@@ -217,9 +227,11 @@ class ChessGame {
     if (bk) c += 'k';
     if (bq) c += 'q';
     sb.write(c.isEmpty ? '- ' : '$c ');
-    sb.write(ep == -1
-        ? '-'
-        : '${String.fromCharCode(97 + fileOf(ep))}${rankOf(ep) + 1}');
+    sb.write(
+      ep == -1
+          ? '-'
+          : '${String.fromCharCode(97 + fileOf(ep))}${rankOf(ep) + 1}',
+    );
     sb.write(' $halfmove $fullmove');
     return sb.toString();
   }
@@ -282,7 +294,7 @@ class ChessGame {
       [-1, -2],
       [-2, -1],
       [-2, 1],
-      [-1, 2]
+      [-1, 2],
     ];
     for (final o in kofs) {
       final nf = f + o[0], nr = r + o[1];
@@ -296,8 +308,7 @@ class ChessGame {
       for (var dr = -1; dr <= 1; dr++) {
         if (df == 0 && dr == 0) continue;
         final nf = f + df, nr = r + dr;
-        if (onBoard(nf, nr) &&
-            board[nr * 8 + nf] == (byWhite ? king : -king)) {
+        if (onBoard(nf, nr) && board[nr * 8 + nf] == (byWhite ? king : -king)) {
           return true;
         }
       }
@@ -307,13 +318,13 @@ class ChessGame {
       [1, 1],
       [1, -1],
       [-1, 1],
-      [-1, -1]
+      [-1, -1],
     ];
     const rookDirs = [
       [1, 0],
       [-1, 0],
       [0, 1],
-      [0, -1]
+      [0, -1],
     ];
     for (final o in bishopDirs) {
       var nf = f + o[0], nr = r + o[1];
@@ -322,7 +333,9 @@ class ChessGame {
         if (p != 0) {
           if (byWhite
               ? (p == bishop || p == queen)
-              : (p == -bishop || p == -queen)) return true;
+              : (p == -bishop || p == -queen)) {
+            return true;
+          }
           break;
         }
         nf += o[0];
@@ -336,7 +349,9 @@ class ChessGame {
         if (p != 0) {
           if (byWhite
               ? (p == rook || p == queen)
-              : (p == -rook || p == -queen)) return true;
+              : (p == -rook || p == -queen)) {
+            return true;
+          }
           break;
         }
         nf += o[0];
@@ -404,7 +419,7 @@ class ChessGame {
             [-1, -2],
             [-2, -1],
             [-2, 1],
-            [-1, 2]
+            [-1, 2],
           ]);
           break;
         case bishop:
@@ -412,7 +427,7 @@ class ChessGame {
             [1, 1],
             [1, -1],
             [-1, 1],
-            [-1, -1]
+            [-1, -1],
           ]);
           break;
         case rook:
@@ -420,7 +435,7 @@ class ChessGame {
             [1, 0],
             [-1, 0],
             [0, 1],
-            [0, -1]
+            [0, -1],
           ]);
           break;
         case queen:
@@ -432,7 +447,7 @@ class ChessGame {
             [1, 0],
             [-1, 0],
             [0, 1],
-            [0, -1]
+            [0, -1],
           ]);
           break;
         case king:
@@ -444,7 +459,7 @@ class ChessGame {
             [0, -1],
             [-1, 1],
             [-1, 0],
-            [-1, -1]
+            [-1, -1],
           ]);
           _castleMoves(moves, p > 0);
           break;
@@ -493,8 +508,14 @@ class ChessGame {
     }
   }
 
-  void _jumpMoves(List<ChessMove> out, int sq, int f, int r, bool white,
-      List<List<int>> offsets) {
+  void _jumpMoves(
+    List<ChessMove> out,
+    int sq,
+    int f,
+    int r,
+    bool white,
+    List<List<int>> offsets,
+  ) {
     for (final o in offsets) {
       final nf = f + o[0], nr = r + o[1];
       if (!onBoard(nf, nr)) continue;
@@ -503,8 +524,14 @@ class ChessGame {
     }
   }
 
-  void _slideMoves(List<ChessMove> out, int sq, int f, int r, bool white,
-      List<List<int>> dirs) {
+  void _slideMoves(
+    List<ChessMove> out,
+    int sq,
+    int f,
+    int r,
+    bool white,
+    List<List<int>> dirs,
+  ) {
     for (final d in dirs) {
       var nf = f + d[0], nr = r + d[1];
       while (onBoard(nf, nr)) {
@@ -621,13 +648,20 @@ class ChessGame {
     if (piece.abs() == pawn && (m.to - m.from).abs() == 16) {
       ep = (m.from + m.to) ~/ 2;
     }
-    halfmove =
-        (piece.abs() == pawn || captured != 0) ? 0 : halfmove + 1;
+    halfmove = (piece.abs() == pawn || captured != 0) ? 0 : halfmove + 1;
     if (!white) fullmove++;
     whiteToMove = !whiteToMove;
     if (trackSearchKeys) _searchKeys.add(_positionKey());
-    final record =
-        _Undo(m, captured, prevWk, prevWq, prevBk, prevBq, prevEp, prevHalf);
+    final record = _Undo(
+      m,
+      captured,
+      prevWk,
+      prevWq,
+      prevBk,
+      prevBq,
+      prevEp,
+      prevHalf,
+    );
     _searchStack.add(record);
     return record;
   }
@@ -641,8 +675,7 @@ class ChessGame {
     final m = u.move;
     final moved = board[m.to];
     board[m.to] = 0;
-    board[m.from] =
-        m.promotion == 0 ? moved : (moved > 0 ? pawn : -pawn);
+    board[m.from] = m.promotion == 0 ? moved : (moved > 0 ? pawn : -pawn);
     // restore captured (incl. en passant square)
     if (u.captured != 0) {
       if (board[m.from].abs() == pawn && m.to == u.ep) {
@@ -691,19 +724,21 @@ class ChessGame {
     }
     if (match == null) return null;
     final san = toSan(match);
-    _history.add(_Snapshot(
-      List<int>.from(board),
-      whiteToMove,
-      wk,
-      wq,
-      bk,
-      bq,
-      ep,
-      halfmove,
-      fullmove,
-      Map<String, int>.from(_posCounts),
-      sanHistory.length,
-    ));
+    _history.add(
+      _Snapshot(
+        List<int>.from(board),
+        whiteToMove,
+        wk,
+        wq,
+        bk,
+        bq,
+        ep,
+        halfmove,
+        fullmove,
+        Map<String, int>.from(_posCounts),
+        sanHistory.length,
+      ),
+    );
     _doMove(match);
     _searchStack.clear(); // public moves don't use search stack
     _searchKeys.clear();
@@ -714,9 +749,8 @@ class ChessGame {
   }
 
   /// All legal moves from [from] to [to] (multiple = promotion choice).
-  List<ChessMove> findMoves(int from, int to) => legalMoves()
-      .where((m) => m.from == from && m.to == to)
-      .toList();
+  List<ChessMove> findMoves(int from, int to) =>
+      legalMoves().where((m) => m.from == from && m.to == to).toList();
 
   bool get canUndo => _history.isNotEmpty;
 
@@ -773,7 +807,9 @@ class ChessGame {
   String resultText() {
     switch (phase) {
       case GamePhase.checkmate:
-        return whiteToMove ? 'Checkmate · Black wins' : 'Checkmate · White wins';
+        return whiteToMove
+            ? 'Checkmate · Black wins'
+            : 'Checkmate · White wins';
       case GamePhase.stalemate:
         return 'Draw · Stalemate';
       case GamePhase.draw:
@@ -820,17 +856,13 @@ class ChessGame {
       // Disambiguation.
       final others = <ChessMove>[];
       for (final lm in legalMoves()) {
-        if (lm.to == m.to &&
-            lm.from != m.from &&
-            board[lm.from] == piece) {
+        if (lm.to == m.to && lm.from != m.from && board[lm.from] == piece) {
           others.add(lm);
         }
       }
       if (others.isNotEmpty) {
-        final sameFile =
-            others.any((o) => fileOf(o.from) == fileOf(m.from));
-        final sameRank =
-            others.any((o) => rankOf(o.from) == rankOf(m.from));
+        final sameFile = others.any((o) => fileOf(o.from) == fileOf(m.from));
+        final sameRank = others.any((o) => rankOf(o.from) == rankOf(m.from));
         if (!sameFile) {
           sb.writeCharCode(97 + fileOf(m.from));
         } else if (!sameRank) {

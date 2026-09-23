@@ -34,14 +34,14 @@ const List<Puzzle> kPuzzles = [
     id: 2,
     title: 'Queen Takes Pawn',
     fen: '7k/7p/8/8/4B2Q/8/8/5K2 w - - 0 1',
-    solutionUci: 'h5h7',
+    solutionUci: 'h4h7',
     hint: 'The bishop guards your queen. Capture on h7!',
   ),
   Puzzle(
     id: 3,
     title: 'Pawn Shield Mate',
-    fen: '5rk1/5p2/5P2/4Q3/8/8/5PPP/6K1 w - - 0 1',
-    solutionUci: 'e5g7',
+    fen: '5rk1/5p2/5P1Q/8/8/8/5PPP/6K1 w - - 0 1',
+    solutionUci: 'h6g7',
     hint: 'The pawn on f6 protects the mating square.',
   ),
   Puzzle(
@@ -61,9 +61,9 @@ const List<Puzzle> kPuzzles = [
   Puzzle(
     id: 6,
     title: 'Promote to Win',
-    fen: 'R5k1/6Pp/8/8/8/8/8/6K1 w - - 0 1',
-    solutionUci: 'g7g8q',
-    hint: 'Push and promote — queen or rook both mate.',
+    fen: 'R5nk/5P1p/8/8/8/8/8/6K1 w - - 0 1',
+    solutionUci: 'f7g8q',
+    hint: 'Take on g8 and promote — queen or rook both mate.',
   ),
   Puzzle(
     id: 7,
@@ -96,7 +96,7 @@ const List<Puzzle> kPuzzles = [
   Puzzle(
     id: 11,
     title: "Scholar's Mate",
-    fen: '4k3/4p3/8/8/2B4Q/8/8/4K3 w - - 0 1',
+    fen: '3qk3/3ppp2/8/7Q/2B5/8/8/4K3 w - - 0 1',
     solutionUci: 'h5f7',
     hint: 'The classic! Queen to f7, guarded by the bishop.',
   ),

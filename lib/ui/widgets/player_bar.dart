@@ -36,9 +36,11 @@ class PlayerBar extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: active
             ? const LinearGradient(
-                colors: [Color(0xFF8A4E12), Color(0xFFB96A1B)])
+                colors: [Color(0xFF8A4E12), Color(0xFFB96A1B)],
+              )
             : const LinearGradient(
-                colors: [Color(0xFF2A1608), Color(0xFF3A2110)]),
+                colors: [Color(0xFF2A1608), Color(0xFF3A2110)],
+              ),
       ),
       child: Row(
         children: [
@@ -48,7 +50,7 @@ class PlayerBar extends StatelessWidget {
               border: Border.all(color: Colors.white, width: 2),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.4),
+                  color: Colors.black.withValues(alpha: 0.4),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
@@ -75,9 +77,11 @@ class PlayerBar extends StatelessWidget {
                 if (showClock)
                   Row(
                     children: [
-                      Icon(Icons.timer,
-                          size: 14,
-                          color: active ? Colors.white : AppColors.textDim),
+                      Icon(
+                        Icons.timer,
+                        size: 14,
+                        color: active ? Colors.white : AppColors.textDim,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         clockText,
@@ -95,7 +99,7 @@ class PlayerBar extends StatelessWidget {
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: active
-                                ? Colors.white.withOpacity(0.85)
+                                ? Colors.white.withValues(alpha: 0.85)
                                 : AppColors.textDim,
                           ),
                         ),

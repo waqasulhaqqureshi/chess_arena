@@ -24,6 +24,22 @@ ChessMove _uci(ChessGame g, String uci) {
       .firstWhere((m) => m.promotion == p);
 }
 
+/// Colour-mirrors a FEN board part (rank order reversed + case flipped).
+/// A colour-mirrored position must evaluate to the exact negation.
+String _mirrorBoard(String board) {
+  String flip(String c) {
+    final code = c.codeUnitAt(0);
+    if (code >= 48 && code <= 57) return c; // digits untouched
+    return c == c.toLowerCase() ? c.toUpperCase() : c.toLowerCase();
+  }
+
+  return board
+      .split('/')
+      .reversed
+      .map((rank) => rank.split('').map(flip).join())
+      .join('/');
+}
+
 void main() {
   group('movegen (perft)', () {
     test('startpos d1..d3', () {
@@ -107,6 +123,26 @@ void main() {
         expect(san, isNotNull, reason: 'puzzle #${p.id} illegal');
         expect(g.phase, GamePhase.checkmate,
             reason: 'puzzle #${p.id} does not mate');
+      }
+    });
+    test('puzzle pack integrity: kings, legality, canonical solution', () {
+      for (final p in kPuzzles) {
+        final g = ChessGame.fromFen(p.fen);
+        expect(g.board.where((v) => v.abs() == king).length, 2,
+            reason: 'puzzle #${p.id} must have exactly two kings');
+        // The side that is NOT to move must not already be in check.
+        expect(g.inCheck(!g.whiteToMove), isFalse,
+            reason: 'puzzle #${p.id} starts with the wrong king in check');
+        // The canonical solution must be one of the legal mating moves.
+        final mates = <String>[];
+        for (final m in g.legalMoves()) {
+          final t = ChessGame.fromFen(p.fen);
+          t.playMove(m);
+          if (t.phase == GamePhase.checkmate) mates.add(m.toUci());
+        }
+        expect(mates, contains(p.solutionUci),
+            reason: 'puzzle #${p.id} solution ${p.solutionUci} is not a mate '
+                '(legal mating moves: $mates)');
       }
     });
   });
@@ -239,6 +275,43 @@ void main() {
       expect(back.difficulty.depth, 3);
       expect(back.timeControl.id, s.timeControl.id);
       expect(back.playerIsWhite, isFalse);
+    });
+  });
+
+  group('evaluation (colour symmetry + black material)', () {
+    test('mirror symmetry: colour-mirrored positions negate exactly', () {
+      // Guards the p.abs() class of bug: black kings/pawns were once
+      // compared against positive piece codes and silently ignored.
+      const boards = [
+        'k7/8/8/8/8/8/P7/K7',
+        'k7/p7/8/8/8/8/8/K7',
+        '8/8/8/3k4/8/8/8/QK6',
+        'r3k2r/pp3ppp/2n5/8/8/2N5/PP3PPP/R3K2R',
+        'k7/5p2/8/8/8/8/5P2/K7',
+        'k7/pp6/8/8/8/8/PP6/K7',
+      ];
+      for (final b in boards) {
+        final direct = evaluate(ChessGame.fromFen('$b w - - 0 1'));
+        final mirrored =
+            evaluate(ChessGame.fromFen('${_mirrorBoard(b)} w - - 0 1'));
+        expect(direct, -mirrored, reason: 'asymmetric eval for $b');
+      }
+    });
+    test('black doubled pawns are penalised', () {
+      final healthy =
+          evaluate(ChessGame.fromFen('k7/pp6/8/8/8/8/8/K7 w - - 0 1'));
+      final doubled =
+          evaluate(ChessGame.fromFen('k7/p7/p7/8/8/8/8/K7 w - - 0 1'));
+      expect(doubled, greaterThan(healthy));
+    });
+    test('black passed pawn is rewarded (mirrored bonus table)', () {
+      // e2 is two steps from promoting for black: the bonus must be the
+      // highest one, not the lowest (rank mirroring bug).
+      final nearPromo =
+          evaluate(ChessGame.fromFen('k7/8/8/8/8/8/4p3/K7 w - - 0 1'));
+      final homeRank =
+          evaluate(ChessGame.fromFen('k7/4p3/8/8/8/8/8/K7 w - - 0 1'));
+      expect(nearPromo, lessThan(homeRank));
     });
   });
 }

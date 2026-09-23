@@ -17,8 +17,7 @@ import 'chess_rules.dart';
 /// Parses a UCI move like `e2e4` / `e7e8q` into a legal [ChessMove].
 ChessMove? parseUciMove(ChessGame g, String uci) {
   if (uci.length < 4) return null;
-  int sq(int o) =>
-      (uci.codeUnitAt(o + 1) - 49) * 8 + (uci.codeUnitAt(o) - 97);
+  int sq(int o) => (uci.codeUnitAt(o + 1) - 49) * 8 + (uci.codeUnitAt(o) - 97);
   if (sq(0) < 0 || sq(0) > 63 || sq(2) < 0 || sq(2) > 63) return null;
   const promo = {'n': knight, 'b': bishop, 'r': rook, 'q': queen};
   final p = uci.length > 4 ? (promo[uci[4]] ?? 0) : 0;
@@ -45,14 +44,8 @@ class StockfishService {
     _probed = true;
     try {
       final sf = Stockfish();
-      if (sf == null) {
-        debugPrint('[Stockfish] instance already active elsewhere');
-        _available = false;
-        return false;
-      }
       _sf = sf;
-      final deadline =
-          DateTime.now().add(const Duration(milliseconds: 4000));
+      final deadline = DateTime.now().add(const Duration(milliseconds: 4000));
       while (sf.state.value != StockfishState.ready &&
           DateTime.now().isBefore(deadline)) {
         if (sf.state.value == StockfishState.disposed) break;
@@ -68,21 +61,17 @@ class StockfishService {
   }
 
   /// Queued UCI best-move query. Returns UCI string or null (caller
-  /// falls back to the Arena brain). Queries run one at a time.
+  /// falls back to the Arena brain).
   Future<String?> bestMoveUci(
     String fen, {
     required int skillLevel,
     required int movetimeMs,
-  }) async {
-    final prev = _queue;
-    final done = Completer<void>();
-    _queue = done.future;
-    await prev;
-    try {
-      return await _search(fen, skillLevel, movetimeMs);
-    } finally {
-      done.complete();
-    }
+  }) {
+    final job = _queue.then<String?>(
+      (_) => _search(fen, skillLevel, movetimeMs),
+    );
+    _queue = job.then((_) {}, onError: (_) {});
+    return job;
   }
 
   Future<String?> _search(String fen, int skill, int movetimeMs) async {
@@ -103,11 +92,13 @@ class StockfishService {
       sf.stdin = 'setoption name Skill Level value ${skill.clamp(0, 20)}';
       sf.stdin = 'position fen $fen';
       sf.stdin = 'go movetime $movetimeMs';
-      final res = await got.future
-          .timeout(const Duration(seconds: 8), onTimeout: () {
-        sf.stdin = 'stop';
-        return null;
-      });
+      final res = await got.future.timeout(
+        const Duration(seconds: 8),
+        onTimeout: () {
+          sf.stdin = 'stop';
+          return null;
+        },
+      );
       await sub.cancel();
       return res;
     } catch (e) {

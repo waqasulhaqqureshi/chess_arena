@@ -67,7 +67,8 @@ class ChessBoardWidget extends StatelessWidget {
                         children: List.generate(8, (col) {
                           final sq = _squareAt(row, col);
                           return Expanded(
-                              child: _buildSquare(context, sq, sqSize));
+                            child: _buildSquare(context, sq, sqSize),
+                          );
                         }),
                       ),
                     );
@@ -97,7 +98,8 @@ class ChessBoardWidget extends StatelessWidget {
     final target = selectedMoves.where((m) => m.to == sq).toList();
     final isTarget = target.isNotEmpty;
     final isCaptureTarget = isTarget && game.board[sq] != 0;
-    final isLastMove = showLastMove &&
+    final isLastMove =
+        showLastMove &&
         lastMove != null &&
         (lastMove!.from == sq || lastMove!.to == sq);
     final isCheck = sq == checkSquare;
@@ -106,27 +108,29 @@ class ChessBoardWidget extends StatelessWidget {
 
     Color overlay = Colors.transparent;
     if (isLastMove) {
-      overlay = AppColors.lastMove.withOpacity(0.22);
+      overlay = AppColors.lastMove.withValues(alpha: 0.22);
     }
     if (isHint) {
-      overlay = AppColors.selectSq.withOpacity( 0.55);
+      overlay = AppColors.selectSq.withValues(alpha: 0.55);
     }
     if (isSelected || isPending) {
-      overlay = (isPending ? AppColors.orange : AppColors.selectSq)
-          .withOpacity( 0.6);
+      overlay = (isPending ? AppColors.orange : AppColors.selectSq).withValues(
+        alpha: 0.6,
+      );
     }
     if (isCheck) {
-      overlay = AppColors.checkSq.withOpacity( 0.75);
+      overlay = AppColors.checkSq.withValues(alpha: 0.75);
     }
 
-    final showFile = (!orientationWhite && sq >= 56) ||
-        (orientationWhite && sq < 8);
-    final showRank = (!orientationWhite && fileOf(sq) == 7) ||
+    final showFile =
+        (!orientationWhite && sq >= 56) || (orientationWhite && sq < 8);
+    final showRank =
+        (!orientationWhite && fileOf(sq) == 7) ||
         (orientationWhite && fileOf(sq) == 0);
 
     final coordColor = isLight
-        ? theme.dark.withOpacity( 0.9)
-        : theme.light.withOpacity( 0.9);
+        ? theme.dark.withValues(alpha: 0.9)
+        : theme.light.withValues(alpha: 0.9);
 
     return GestureDetector(
       onTap: () => onTap(sq),
@@ -154,10 +158,7 @@ class ChessBoardWidget extends StatelessWidget {
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(
-                    border: Border.all(
-                      color: AppColors.lastMove,
-                      width: 3,
-                    ),
+                    border: Border.all(color: AppColors.lastMove, width: 3),
                   ),
                 ),
               ),
@@ -171,9 +172,10 @@ class ChessBoardWidget extends StatelessWidget {
                     ? SizedBox(key: ValueKey('e$animKey-$sq'), width: sqSize)
                     : PieceWidget(
                         key: ValueKey(
-                            lastMove != null && lastMove!.to == sq
-                                ? 'm$animKey-$sq'
-                                : 'p$piece-$sq'),
+                          lastMove != null && lastMove!.to == sq
+                              ? 'm$animKey-$sq'
+                              : 'p$piece-$sq',
+                        ),
                         piece: piece,
                         size: sqSize * 0.78,
                         useImages: pieceImages,
@@ -190,7 +192,7 @@ class ChessBoardWidget extends StatelessWidget {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: AppColors.selectSq.withOpacity( 0.9),
+                            color: AppColors.selectSq.withValues(alpha: 0.9),
                             width: sqSize * 0.09,
                           ),
                         ),
@@ -200,7 +202,7 @@ class ChessBoardWidget extends StatelessWidget {
                         height: sqSize * 0.32,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          color: Colors.black.withOpacity( 0.28),
+                          color: Colors.black.withValues(alpha: 0.28),
                         ),
                       ),
               ),
@@ -268,7 +270,9 @@ class MiniBoard extends StatelessWidget {
                     children: List.generate(8, (f) {
                       final light = (f + (7 - r)) % 2 == 1;
                       return Expanded(
-                        child: Container(color: light ? theme.light : theme.dark),
+                        child: Container(
+                          color: light ? theme.light : theme.dark,
+                        ),
                       );
                     }),
                   ),

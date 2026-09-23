@@ -33,23 +33,28 @@ class _RankingsScreenState extends State<RankingsScreen> {
       child: Column(
         children: [
           Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(
               children: [
                 Text('Rankings', style: AppTheme.title22),
                 const Spacer(),
-                _filterChip(const Icon(Icons.public, size: 20, color: Colors.white), _world, () => setState(() => _world = true)),
+                _filterChip(
+                  const Icon(Icons.public, size: 20, color: Colors.white),
+                  _world,
+                  () => setState(() => _world = true),
+                ),
                 const SizedBox(width: 8),
-                _filterChip(Text(repo.flagEmoji, style: const TextStyle(fontSize: 18)), !_world,
-                    () => setState(() => _world = false)),
+                _filterChip(
+                  Text(repo.flagEmoji, style: const TextStyle(fontSize: 18)),
+                  !_world,
+                  () => setState(() => _world = false),
+                ),
               ],
             ),
           ),
           if (!SupabaseService.isReady)
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Text(
                 'Offline board · live global rankings sync with Supabase',
                 style: AppTheme.dim12,
@@ -61,8 +66,8 @@ class _RankingsScreenState extends State<RankingsScreen> {
               builder: (context, snap) {
                 if (!snap.hasData) {
                   return const Center(
-                      child: CircularProgressIndicator(
-                          color: AppColors.orange));
+                    child: CircularProgressIndicator(color: AppColors.orange),
+                  );
                 }
                 var rows = snap.data!;
                 if (!_world) {
@@ -74,24 +79,25 @@ class _RankingsScreenState extends State<RankingsScreen> {
                 return RefreshIndicator(
                   color: AppColors.orange,
                   onRefresh: () async {
-                    final f =
-                        context.read<ArenaRepository>().rankings();
+                    final f = context.read<ArenaRepository>().rankings();
                     setState(() => _future = f);
                     await f;
                   },
                   child: ListView.separated(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     itemCount: rows.length,
-                    separatorBuilder: (_, __) =>
+                    separatorBuilder: (_, _) =>
                         const Divider(color: AppColors.divider, height: 1),
                     itemBuilder: (_, i) {
                       final r = rows[i];
                       return Container(
                         color: r.isPlayer
-                            ? AppColors.orange.withOpacity( 0.18)
+                            ? AppColors.orange.withValues(alpha: 0.18)
                             : Colors.transparent,
                         padding: const EdgeInsets.symmetric(
-                            vertical: 10, horizontal: 8),
+                          vertical: 10,
+                          horizontal: 8,
+                        ),
                         child: Row(
                           children: [
                             SizedBox(
@@ -99,13 +105,13 @@ class _RankingsScreenState extends State<RankingsScreen> {
                               child: Text(
                                 '#${i + 1}',
                                 style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w800,
-                                    color: AppColors.textDim),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.textDim,
+                                ),
                               ),
                             ),
-                            Text(r.flag,
-                                style: const TextStyle(fontSize: 22)),
+                            Text(r.flag, style: const TextStyle(fontSize: 22)),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
@@ -121,14 +127,18 @@ class _RankingsScreenState extends State<RankingsScreen> {
                                 ),
                               ),
                             ),
-                            const Icon(Icons.bar_chart,
-                                size: 15, color: AppColors.orange),
+                            const Icon(
+                              Icons.bar_chart,
+                              size: 15,
+                              color: AppColors.orange,
+                            ),
                             const SizedBox(width: 6),
                             Text(
                               '${r.rating}',
                               style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.w800),
+                                fontSize: 15,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                           ],
                         ),
@@ -148,14 +158,12 @@ class _RankingsScreenState extends State<RankingsScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
         decoration: BoxDecoration(
           gradient: sel
-              ? const LinearGradient(colors: [
-                  AppColors.orangeLight,
-                  AppColors.orangeDark
-                ])
+              ? const LinearGradient(
+                  colors: [AppColors.orangeLight, AppColors.orangeDark],
+                )
               : null,
           color: sel ? null : AppColors.card,
           borderRadius: BorderRadius.circular(20),

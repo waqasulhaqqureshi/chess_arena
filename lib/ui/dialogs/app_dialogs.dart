@@ -23,7 +23,7 @@ import '../widgets/piece_widget.dart';
 // dim Cancel + orange action side by side.
 // ---------------------------------------------------------------------------
 
-Future<bool?> showVideoConfirm(
+Future<bool> showVideoConfirm(
   BuildContext context, {
   required String title,
   required String subtitle,
@@ -32,19 +32,20 @@ Future<bool?> showVideoConfirm(
 }) {
   return showDialog<bool>(
     context: context,
-    barrierColor: Colors.black.withOpacity(0.55),
+    barrierColor: Colors.black.withValues(alpha: 0.55),
     builder: (_) => Center(
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 32),
         padding: const EdgeInsets.fromLTRB(18, 20, 18, 18),
         decoration: BoxDecoration(
-          color: const Color(0xFF39607E).withOpacity(0.92),
+          color: const Color(0xFF39607E).withValues(alpha: 0.92),
           borderRadius: BorderRadius.circular(14),
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(0.5),
-                blurRadius: 18,
-                offset: const Offset(0, 8)),
+              color: Colors.black.withValues(alpha: 0.5),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
           ],
         ),
         child: Material(
@@ -56,24 +57,27 @@ Future<bool?> showVideoConfirm(
                 title,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                    fontSize: 21,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    shadows: [
-                      Shadow(
-                          color: Colors.black45,
-                          blurRadius: 4,
-                          offset: Offset(0, 2)),
-                    ]),
+                  fontSize: 21,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  shadows: [
+                    Shadow(
+                      color: Colors.black45,
+                      blurRadius: 4,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 6),
               Text(
                 subtitle,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.white,
+                ),
               ),
               const SizedBox(height: 18),
               Row(
@@ -84,16 +88,17 @@ Future<bool?> showVideoConfirm(
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.28),
+                          color: Colors.black.withValues(alpha: 0.28),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         alignment: Alignment.center,
                         child: Text(
                           cancelLabel,
                           style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -105,22 +110,28 @@ Future<bool?> showVideoConfirm(
                       child: Container(
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(colors: [
-                            AppColors.orangeLight,
-                            AppColors.orangeDark
-                          ]),
+                          gradient: const LinearGradient(
+                            colors: [
+                              AppColors.orangeLight,
+                              AppColors.orangeDark,
+                            ],
+                          ),
                           borderRadius: BorderRadius.circular(10),
                           border: const Border(
-                              bottom: BorderSide(
-                                  color: AppColors.orangeDeep, width: 3)),
+                            bottom: BorderSide(
+                              color: AppColors.orangeDeep,
+                              width: 3,
+                            ),
+                          ),
                         ),
                         alignment: Alignment.center,
                         child: Text(
                           actionLabel,
                           style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w800,
-                              color: Colors.white),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -132,17 +143,14 @@ Future<bool?> showVideoConfirm(
         ),
       ),
     ),
-  );
+  ).then((value) => value ?? false);
 }
 
 // ---------------------------------------------------------------------------
 // In-game hamburger menu (U2): Mute / Offer Draw / Friend request / Resign.
 // ---------------------------------------------------------------------------
 
-Future<String?> showGameMenuSheet(
-  BuildContext context, {
-  required bool muted,
-}) {
+Future<String?> showGameMenuSheet(BuildContext context, {required bool muted}) {
   return showModalBottomSheet<String>(
     context: context,
     builder: (_) => SafeArea(
@@ -160,13 +168,21 @@ Future<String?> showGameMenuSheet(
               ),
             ),
             const SizedBox(height: 8),
-            _menuRow(Icons.do_not_disturb_on, AppColors.red,
-                muted ? 'Unmute opponent' : 'Mute opponent', 'mute'),
+            _menuRow(
+              Icons.do_not_disturb_on,
+              AppColors.red,
+              muted ? 'Unmute opponent' : 'Mute opponent',
+              'mute',
+            ),
             const Divider(color: AppColors.divider, height: 1),
             _menuRow(Icons.handshake, AppColors.orange, 'Offer Draw', 'draw'),
             const Divider(color: AppColors.divider, height: 1),
-            _menuRow(Icons.person_add_alt_1, AppColors.greenBright,
-                'Send friend request', 'friend'),
+            _menuRow(
+              Icons.person_add_alt_1,
+              AppColors.greenBright,
+              'Send friend request',
+              'friend',
+            ),
             const Divider(color: AppColors.divider, height: 1),
             _menuRow(Icons.flag, Colors.white, 'Resign', 'resign'),
           ],
@@ -177,23 +193,29 @@ Future<String?> showGameMenuSheet(
 }
 
 Widget _menuRow(IconData icon, Color color, String label, String value) {
-  return Builder(builder: (context) {
-    return InkWell(
-      onTap: () => Navigator.of(context).pop(value),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        child: Row(
-          children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(width: 14),
-            Text(label,
-                style:
-                    const TextStyle(fontSize: 15, fontWeight: FontWeight.w800)),
-          ],
+  return Builder(
+    builder: (context) {
+      return InkWell(
+        onTap: () => Navigator.of(context).pop(value),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          child: Row(
+            children: [
+              Icon(icon, color: color, size: 24),
+              const SizedBox(width: 14),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
-    );
-  });
+      );
+    },
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -251,36 +273,42 @@ class _ChatSheet extends StatelessWidget {
                   ? Padding(
                       padding: const EdgeInsets.symmetric(vertical: 18),
                       child: Center(
-                        child: Text('Say hi! Quick messages below.',
-                            style: AppTheme.dim13),
+                        child: Text(
+                          'Say hi! Quick messages below.',
+                          style: AppTheme.dim13,
+                        ),
                       ),
                     )
                   : ListView(
                       shrinkWrap: true,
                       children: c.chat
-                          .map((m) => Align(
-                                alignment: m.mine
-                                    ? Alignment.centerRight
-                                    : Alignment.centerLeft,
-                                child: Container(
-                                  margin:
-                                      const EdgeInsets.symmetric(vertical: 3),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: m.mine
-                                        ? AppColors.orange.withOpacity(0.85)
-                                        : AppColors.cardLight,
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  child: Text(
-                                    m.text,
-                                    style: const TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600),
+                          .map(
+                            (m) => Align(
+                              alignment: m.mine
+                                  ? Alignment.centerRight
+                                  : Alignment.centerLeft,
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(vertical: 3),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: m.mine
+                                      ? AppColors.orange.withValues(alpha: 0.85)
+                                      : AppColors.cardLight,
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: Text(
+                                  m.text,
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
-                              ))
+                              ),
+                            ),
+                          )
                           .toList(),
                     ),
             ),
@@ -289,24 +317,30 @@ class _ChatSheet extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: ['Hi!', 'GL 🙂', 'Nice!', 'GG', 'Thanks']
-                  .map((q) => GestureDetector(
-                        onTap: () => c.sendChat(q),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 14, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: AppColors.cardDark,
-                            borderRadius: BorderRadius.circular(18),
-                            border:
-                                Border.all(color: AppColors.orange, width: 1),
-                          ),
-                          child: Text(q,
-                              style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.orangeLight)),
+                  .map(
+                    (q) => GestureDetector(
+                      onTap: () => c.sendChat(q),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 8,
                         ),
-                      ))
+                        decoration: BoxDecoration(
+                          color: AppColors.cardDark,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: AppColors.orange, width: 1),
+                        ),
+                        child: Text(
+                          q,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.orangeLight,
+                          ),
+                        ),
+                      ),
+                    ),
+                  )
                   .toList(),
             ),
           ],
@@ -325,8 +359,11 @@ class PlayCpuChoice {
   final CpuDifficulty difficulty;
   final bool playerIsWhite;
   final bool competitive;
-  const PlayCpuChoice(this.difficulty, this.playerIsWhite,
-      {this.competitive = false});
+  const PlayCpuChoice(
+    this.difficulty,
+    this.playerIsWhite, {
+    this.competitive = false,
+  });
 }
 
 Future<PlayCpuChoice?> showPlayCpuDialog(BuildContext context) {
@@ -359,17 +396,43 @@ class _PlayCpuDialogState extends State<_PlayCpuDialog> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SectionLabel('Difficulty'),
-          _radio(0, _diff, 'Easy', '~600 ELO', (v) => setState(() => _diff = v)),
-          _radio(1, _diff, 'Medium', '~1100 ELO',
-              (v) => setState(() => _diff = v)),
-          _radio(2, _diff, 'Hard', '~1600 ELO',
-              (v) => setState(() => _diff = v)),
+          _radio(
+            0,
+            _diff,
+            'Easy',
+            '~600 ELO',
+            (v) => setState(() => _diff = v),
+          ),
+          _radio(
+            1,
+            _diff,
+            'Medium',
+            '~1100 ELO',
+            (v) => setState(() => _diff = v),
+          ),
+          _radio(
+            2,
+            _diff,
+            'Hard',
+            '~1600 ELO',
+            (v) => setState(() => _diff = v),
+          ),
           const SizedBox(height: 12),
           const SectionLabel('Color'),
-          _radio(0, _color, 'As white', null,
-              (v) => setState(() => _color = v)),
-          _radio(1, _color, 'As black', null,
-              (v) => setState(() => _color = v)),
+          _radio(
+            0,
+            _color,
+            'As white',
+            null,
+            (v) => setState(() => _color = v),
+          ),
+          _radio(
+            1,
+            _color,
+            'As black',
+            null,
+            (v) => setState(() => _color = v),
+          ),
           const SizedBox(height: 12),
           InkWell(
             onTap: () => setState(() => _competitive = !_competitive),
@@ -381,15 +444,20 @@ class _PlayCpuDialogState extends State<_PlayCpuDialog> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color:
-                          _competitive ? AppColors.orange : AppColors.textDim,
+                      color: _competitive
+                          ? AppColors.orange
+                          : AppColors.textDim,
                       width: 2.5,
                     ),
                   ),
                   child: _competitive
                       ? const Center(
-                          child: Icon(Icons.circle,
-                              size: 12, color: AppColors.orange))
+                          child: Icon(
+                            Icons.circle,
+                            size: 12,
+                            color: AppColors.orange,
+                          ),
+                        )
                       : null,
                 ),
                 const SizedBox(width: 10),
@@ -417,11 +485,12 @@ class _PlayCpuDialogState extends State<_PlayCpuDialog> {
                 _diff == 0
                     ? CpuDifficulty.easy
                     : _diff == 1
-                        ? CpuDifficulty.medium
-                        : CpuDifficulty.hard
+                    ? CpuDifficulty.medium
+                    : CpuDifficulty.hard,
               ][0];
-              Navigator.of(context)
-                  .pop(PlayCpuChoice(d, _color == 0, competitive: _competitive));
+              Navigator.of(
+                context,
+              ).pop(PlayCpuChoice(d, _color == 0, competitive: _competitive));
             },
           ),
         ],
@@ -430,7 +499,12 @@ class _PlayCpuDialogState extends State<_PlayCpuDialog> {
   }
 
   Widget _radio(
-      int value, int group, String label, String? sub, ValueChanged<int> onTap) {
+    int value,
+    int group,
+    String label,
+    String? sub,
+    ValueChanged<int> onTap,
+  ) {
     final sel = value == group;
     return InkWell(
       onTap: () => onTap(value),
@@ -450,15 +524,19 @@ class _PlayCpuDialogState extends State<_PlayCpuDialog> {
               ),
               child: sel
                   ? const Center(
-                      child: Icon(Icons.circle,
-                          size: 12, color: AppColors.orange),
+                      child: Icon(
+                        Icons.circle,
+                        size: 12,
+                        color: AppColors.orange,
+                      ),
                     )
                   : null,
             ),
             const SizedBox(width: 10),
-            Text(label,
-                style:
-                    const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
+            ),
             if (sub != null) ...[
               const SizedBox(width: 8),
               Text(sub, style: AppTheme.dim12),
@@ -532,18 +610,25 @@ class _TimeControlsSheetState extends State<_TimeControlsSheet> {
               child: ListView.separated(
                 shrinkWrap: true,
                 itemCount: kTimeControls.length,
-                separatorBuilder: (_, __) =>
+                separatorBuilder: (_, _) =>
                     const Divider(color: AppColors.divider, height: 1),
                 itemBuilder: (_, i) {
                   final tc = kTimeControls[i];
                   final sel = _sel.contains(tc.id);
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading:
-                        SvgPicture.asset(tc.iconAsset, width: 36, height: 36),
-                    title: Text(tc.name,
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w800)),
+                    leading: SvgPicture.asset(
+                      tc.iconAsset,
+                      width: 36,
+                      height: 36,
+                    ),
+                    title: Text(
+                      tc.name,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                     subtitle: Text(tc.subtitle, style: AppTheme.dim13),
                     trailing: GestureDetector(
                       onTap: () => setState(() {
@@ -556,14 +641,16 @@ class _TimeControlsSheetState extends State<_TimeControlsSheet> {
                           shape: BoxShape.circle,
                           color: sel ? AppColors.orange : Colors.transparent,
                           border: Border.all(
-                            color:
-                                sel ? AppColors.orange : AppColors.textDim,
+                            color: sel ? AppColors.orange : AppColors.textDim,
                             width: 2,
                           ),
                         ),
                         child: sel
-                            ? const Icon(Icons.check,
-                                size: 18, color: Colors.white)
+                            ? const Icon(
+                                Icons.check,
+                                size: 18,
+                                color: Colors.white,
+                              )
                             : null,
                       ),
                     ),
@@ -578,8 +665,10 @@ class _TimeControlsSheetState extends State<_TimeControlsSheet> {
             Row(
               children: [
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.cardDark,
                     borderRadius: BorderRadius.circular(20),
@@ -587,7 +676,9 @@ class _TimeControlsSheetState extends State<_TimeControlsSheet> {
                   child: Text(
                     '● ${_sel.length} mode${_sel.length == 1 ? '' : 's'} selected',
                     style: const TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.w700),
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
                 const Spacer(),
@@ -595,8 +686,7 @@ class _TimeControlsSheetState extends State<_TimeControlsSheet> {
                   width: 130,
                   child: ArenaButton(
                     label: 'DONE',
-                    onPressed: () =>
-                        Navigator.of(context).pop(_sel.toList()),
+                    onPressed: () => Navigator.of(context).pop(_sel.toList()),
                   ),
                 ),
               ],
@@ -613,10 +703,7 @@ class _TimeControlsSheetState extends State<_TimeControlsSheet> {
 // ---------------------------------------------------------------------------
 
 Future<void> showSettingsDialog(BuildContext context) {
-  return showDialog(
-    context: context,
-    builder: (_) => const _SettingsDialog(),
-  );
+  return showDialog(context: context, builder: (_) => const _SettingsDialog());
 }
 
 class _SettingsDialog extends StatelessWidget {
@@ -634,22 +721,70 @@ class _SettingsDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             _toggle(context, s, Icons.volume_up, 'Sound', s.sound, 'sound'),
-            _toggle(context, s, Icons.grid_on, 'Show last move', s.showLastMove,
-                'showLastMove'),
-            _toggle(context, s, Icons.animation, 'Piece animation',
-                s.pieceAnimation, 'pieceAnimation'),
-            _toggle(context, s, Icons.help_outline, 'Show move help',
-                s.showMoveHelp, 'showMoveHelp'),
-            _toggle(context, s, Icons.check_circle_outline, 'Confirm my moves',
-                s.confirmMoves, 'confirmMoves'),
-            _toggle(context, s, Icons.workspace_premium, 'Auto promote queen',
-                s.autoQueen, 'autoQueen'),
-            _toggle(context, s, Icons.chat_bubble_outline, 'Show chat',
-                s.showChat, 'showChat'),
-            _toggle(context, s, Icons.image, 'Piece images (PNG set)',
-                s.pieceImages, 'pieceImages'),
-            _toggle(context, s, Icons.memory, 'Stockfish engine (Android/iOS)',
-                s.useStockfish, 'useStockfish'),
+            _toggle(
+              context,
+              s,
+              Icons.grid_on,
+              'Show last move',
+              s.showLastMove,
+              'showLastMove',
+            ),
+            _toggle(
+              context,
+              s,
+              Icons.animation,
+              'Piece animation',
+              s.pieceAnimation,
+              'pieceAnimation',
+            ),
+            _toggle(
+              context,
+              s,
+              Icons.help_outline,
+              'Show move help',
+              s.showMoveHelp,
+              'showMoveHelp',
+            ),
+            _toggle(
+              context,
+              s,
+              Icons.check_circle_outline,
+              'Confirm my moves',
+              s.confirmMoves,
+              'confirmMoves',
+            ),
+            _toggle(
+              context,
+              s,
+              Icons.workspace_premium,
+              'Auto promote queen',
+              s.autoQueen,
+              'autoQueen',
+            ),
+            _toggle(
+              context,
+              s,
+              Icons.chat_bubble_outline,
+              'Show chat',
+              s.showChat,
+              'showChat',
+            ),
+            _toggle(
+              context,
+              s,
+              Icons.image,
+              'Piece images (PNG set)',
+              s.pieceImages,
+              'pieceImages',
+            ),
+            _toggle(
+              context,
+              s,
+              Icons.memory,
+              'Stockfish engine (Android/iOS)',
+              s.useStockfish,
+              'useStockfish',
+            ),
             const SizedBox(height: 10),
             const Align(
               alignment: Alignment.centerLeft,
@@ -679,14 +814,15 @@ class _SettingsDialog extends StatelessWidget {
                           Row(
                             children: [
                               Expanded(
-                                  child: Container(
-                                      height: 16, color: t.light)),
-                              Expanded(child: Container(height: 16, color: t.dark)),
+                                child: Container(height: 16, color: t.light),
+                              ),
+                              Expanded(
+                                child: Container(height: 16, color: t.dark),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 4),
-                          Text(t.name,
-                              style: const TextStyle(fontSize: 11)),
+                          Text(t.name, style: const TextStyle(fontSize: 11)),
                         ],
                       ),
                     ),
@@ -700,8 +836,14 @@ class _SettingsDialog extends StatelessWidget {
     );
   }
 
-  Widget _toggle(BuildContext context, SettingsController s, IconData icon,
-      String label, bool value, String key) {
+  Widget _toggle(
+    BuildContext context,
+    SettingsController s,
+    IconData icon,
+    String label,
+    bool value,
+    String key,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -709,13 +851,14 @@ class _SettingsDialog extends StatelessWidget {
           Icon(icon, size: 22, color: AppColors.orange),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(label,
-                style:
-                    const TextStyle(fontSize: 14, fontWeight: FontWeight.w700)),
+            child: Text(
+              label,
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+            ),
           ),
           Switch(
             value: value,
-            activeColor: AppColors.orange,
+            activeThumbColor: AppColors.orange,
             onChanged: (v) => s.set(key, v),
           ),
         ],
@@ -765,7 +908,11 @@ class _CustomizeSheetState extends State<_CustomizeSheet> {
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.fromLTRB(
-            18, 10, 18, MediaQuery.of(context).viewInsets.bottom + 16),
+          18,
+          10,
+          18,
+          MediaQuery.of(context).viewInsets.bottom + 16,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -797,8 +944,8 @@ class _CustomizeSheetState extends State<_CustomizeSheet> {
                       filled: true,
                       fillColor: AppColors.cardDark,
                       border: OutlineInputBorder(
-                          borderRadius:
-                              BorderRadius.all(Radius.circular(10))),
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                      ),
                     ),
                   ),
                 ),
@@ -840,11 +987,11 @@ class _CustomizeSheetState extends State<_CustomizeSheet> {
                           Row(
                             children: [
                               Expanded(
-                                  child: Container(
-                                      height: 22, color: t.light)),
+                                child: Container(height: 22, color: t.light),
+                              ),
                               Expanded(
-                                  child:
-                                      Container(height: 22, color: t.dark)),
+                                child: Container(height: 22, color: t.dark),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 4),
@@ -869,8 +1016,10 @@ class _CustomizeSheetState extends State<_CustomizeSheet> {
                 ],
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text('Classic vector set · more sets soon',
-                      style: AppTheme.dim12),
+                  child: Text(
+                    'Classic vector set · more sets soon',
+                    style: AppTheme.dim12,
+                  ),
                 ),
               ],
             ),
@@ -885,13 +1034,17 @@ class _CustomizeSheetState extends State<_CustomizeSheet> {
                   onTap: () => _pickCountry(context, repo),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 8),
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.cardDark,
                       borderRadius: BorderRadius.circular(18),
                     ),
-                    child: Text('Flag ${repo.flagEmoji} · tap to change',
-                        style: AppTheme.dim13),
+                    child: Text(
+                      'Flag ${repo.flagEmoji} · tap to change',
+                      style: AppTheme.dim13,
+                    ),
                   ),
                 ),
               ],
@@ -904,23 +1057,36 @@ class _CustomizeSheetState extends State<_CustomizeSheet> {
 
   void _pickCountry(BuildContext context, ArenaRepository repo) {
     const supported = [
-      'US', 'GB', 'IN', 'PK', 'PL', 'DE', 'FR', 'ES',
-      'IT', 'BR', 'RU', 'MX', 'NO', 'MA', 'TR',
+      'US',
+      'GB',
+      'IN',
+      'PK',
+      'PL',
+      'DE',
+      'FR',
+      'ES',
+      'IT',
+      'BR',
+      'RU',
+      'MX',
+      'NO',
+      'MA',
+      'TR',
     ];
     showDialog(
       context: context,
       builder: (ctx) => CountryPickerDialog(
         isSearchable: true,
         titlePadding: const EdgeInsets.all(8),
-        searchInputDecoration:
-            const InputDecoration(hintText: 'Search country…'),
+        searchInputDecoration: const InputDecoration(
+          hintText: 'Search country…',
+        ),
         title: const Text('Select your country'),
         itemFilter: (c) => supported.contains(c.isoCode),
         priorityList: [
           CountryPickerUtils.getCountryByIsoCode(repo.flagCode.toUpperCase()),
         ],
-        onValuePicked: (Country country) =>
-            repo.setFlagCode(country.isoCode),
+        onValuePicked: (Country country) => repo.setFlagCode(country.isoCode),
         itemBuilder: (Country country) => Row(
           children: [
             CountryPickerUtils.getDefaultFlagImage(country),
@@ -941,33 +1107,49 @@ Future<void> showRulesDialog(BuildContext context) {
   return showDialog(
     context: context,
     builder: (_) => AlertDialog(
-      title: const Text('How to play',
-          style: TextStyle(fontWeight: FontWeight.w800)),
+      title: const Text(
+        'How to play',
+        style: TextStyle(fontWeight: FontWeight.w800),
+      ),
       content: const SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('• White moves first; players alternate one move.',
-                style: TextStyle(fontSize: 13)),
+            Text(
+              '• White moves first; players alternate one move.',
+              style: TextStyle(fontSize: 13),
+            ),
             SizedBox(height: 6),
-            Text('• Tap a piece to see its legal moves (dots).',
-                style: TextStyle(fontSize: 13)),
+            Text(
+              '• Tap a piece to see its legal moves (dots).',
+              style: TextStyle(fontSize: 13),
+            ),
             SizedBox(height: 6),
-            Text('• Capture by landing on an enemy piece.',
-                style: TextStyle(fontSize: 13)),
+            Text(
+              '• Capture by landing on an enemy piece.',
+              style: TextStyle(fontSize: 13),
+            ),
             SizedBox(height: 6),
-            Text('• Check = king attacked; you must escape it.',
-                style: TextStyle(fontSize: 13)),
+            Text(
+              '• Check = king attacked; you must escape it.',
+              style: TextStyle(fontSize: 13),
+            ),
             SizedBox(height: 6),
-            Text('• Checkmate = no escape → game over.',
-                style: TextStyle(fontSize: 13)),
+            Text(
+              '• Checkmate = no escape → game over.',
+              style: TextStyle(fontSize: 13),
+            ),
             SizedBox(height: 6),
-            Text('• Castling, en passant and promotion are supported.',
-                style: TextStyle(fontSize: 13)),
+            Text(
+              '• Castling, en passant and promotion are supported.',
+              style: TextStyle(fontSize: 13),
+            ),
             SizedBox(height: 6),
-            Text('• Flag falling loses on time (draw vs bare king).',
-                style: TextStyle(fontSize: 13)),
+            Text(
+              '• Flag falling loses on time (draw vs bare king).',
+              style: TextStyle(fontSize: 13),
+            ),
           ],
         ),
       ),
@@ -1040,8 +1222,8 @@ class _GameOverSheet extends StatelessWidget {
     final deltaColor = delta > 0
         ? AppColors.greenBright
         : delta < 0
-            ? AppColors.red
-            : AppColors.textDim;
+        ? AppColors.red
+        : AppColors.textDim;
     final IconData resultIcon;
     final Color resultColor;
     if (info.playerScore == 1) {
@@ -1072,62 +1254,72 @@ class _GameOverSheet extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: resultColor.withOpacity(0.16),
+                color: resultColor.withValues(alpha: 0.16),
                 shape: BoxShape.circle,
               ),
               child: Icon(resultIcon, size: 54, color: resultColor),
             ),
             const SizedBox(height: 10),
-            Text(info.title,
-                style:
-                    const TextStyle(fontSize: 26, fontWeight: FontWeight.w900)),
+            Text(
+              info.title,
+              style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w900),
+            ),
             const SizedBox(height: 4),
             Text(info.reason, style: AppTheme.dim13),
-            Text('${info.movesPlayed} moves · vs ${setup.opponentName}',
-                style: AppTheme.dim12),
+            Text(
+              '${info.movesPlayed} moves · vs ${setup.opponentName}',
+              style: AppTheme.dim12,
+            ),
             const SizedBox(height: 14),
             if (info.rated)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.bar_chart,
-                      size: 18, color: AppColors.textDim),
+                  const Icon(
+                    Icons.bar_chart,
+                    size: 18,
+                    color: AppColors.textDim,
+                  ),
                   // Animated count-up / count-down of the rating delta.
                   TweenAnimationBuilder<double>(
                     tween: Tween(begin: 0, end: delta.toDouble()),
                     duration: const Duration(milliseconds: 1100),
                     curve: Curves.easeOut,
-                    builder: (_, v, __) => Text(
+                    builder: (_, v, _) => Text(
                       '${v.round() >= 0 ? '+' : ''}${v.round()} → ${info.newRating}',
                       style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
-                          color: deltaColor),
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800,
+                        color: deltaColor,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 14),
-                  SvgPicture.asset('assets/icons/coin.svg',
-                      width: 18, height: 18),
+                  SvgPicture.asset(
+                    'assets/icons/coin.svg',
+                    width: 18,
+                    height: 18,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     '+${info.coinsEarned}',
                     style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.gold),
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.gold,
+                    ),
                   ),
                 ],
               )
             else
-              Text(
-                'Not rated · no rating change',
-                style: AppTheme.dim13,
-              ),
+              Text('Not rated · no rating change', style: AppTheme.dim13),
             if (!AdsService.isConfigured) ...[
               const SizedBox(height: 10),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black26,
                   borderRadius: BorderRadius.circular(8),
@@ -1154,10 +1346,13 @@ class _GameOverSheet extends StatelessWidget {
                       foregroundColor: Colors.white,
                       side: const BorderSide(color: AppColors.textDim),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    child: const Text('New game',
-                        style: TextStyle(fontWeight: FontWeight.w700)),
+                    child: const Text(
+                      'New game',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -1168,10 +1363,13 @@ class _GameOverSheet extends StatelessWidget {
                       foregroundColor: Colors.white,
                       side: const BorderSide(color: AppColors.textDim),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
-                    child: const Text('Home',
-                        style: TextStyle(fontWeight: FontWeight.w700)),
+                    child: const Text(
+                      'Home',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
                   ),
                 ),
               ],

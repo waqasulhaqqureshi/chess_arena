@@ -57,8 +57,7 @@ class _RootShellState extends State<RootShell> {
         ),
         child: SafeArea(
           child: Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             child: Row(
               children: [
                 _item(0, _knightIcon(_tab == 0), 'Play'),
@@ -77,8 +76,11 @@ class _RootShellState extends State<RootShell> {
   }
 
   Widget _navIcon(IconData icon, bool sel) {
-    return Icon(icon,
-        size: 24, color: sel ? AppColors.orange : AppColors.textDim);
+    return Icon(
+      icon,
+      size: 24,
+      color: sel ? AppColors.orange : AppColors.textDim,
+    );
   }
 
   Widget _knightIcon(bool sel) {
@@ -107,7 +109,7 @@ class _RootShellState extends State<RootShell> {
               width: 1.5,
             ),
             color: sel
-                ? AppColors.orange.withOpacity( 0.12)
+                ? AppColors.orange.withValues(alpha: 0.12)
                 : Colors.transparent,
           ),
           child: Column(
