@@ -187,6 +187,20 @@ void main() {
           evaluate(ChessGame.fromFen('k7/8/8/8/8/8/8/QK6 w - - 0 1'));
       expect(corner, greaterThan(center));
     });
+    test('pawn structure: doubled pawns score worse than healthy', () {
+      final healthy =
+          evaluate(ChessGame.fromFen('k7/8/8/8/8/8/PP6/K7 w - - 0 1'));
+      final doubled =
+          evaluate(ChessGame.fromFen('k7/8/8/8/8/P7/P7/K7 w - - 0 1'));
+      expect(healthy, greaterThan(doubled));
+    });
+    test('passed pawns are rewarded', () {
+      final passed =
+          evaluate(ChessGame.fromFen('k7/8/8/8/4P3/8/8/K7 w - - 0 1'));
+      final blocked =
+          evaluate(ChessGame.fromFen('k7/8/8/4p3/4P3/8/8/K7 w - - 0 1'));
+      expect(passed, greaterThan(blocked));
+    });
     test('uci parser maps engine moves onto legal moves', () {
       final g = ChessGame.startingPosition();
       final m = parseUciMove(g, 'e2e4');
@@ -198,7 +212,7 @@ void main() {
     test('opening book plays sensible first moves (Expert path)', () {
       final g = ChessGame.startingPosition();
       final d = CpuDifficulty.forElo(1900);
-      expect(d.depth, 4); // Expert tier exists (stockfish alternative)
+      expect(d.depth, 5); // Expert tier exists (stockfish alternative)
       for (var i = 0; i < 4; i++) {
         final r = thinkSync(g.toFen(), d, seed: 7);
         final m = ChessMove((r['from']! as num).toInt(),

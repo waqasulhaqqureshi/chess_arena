@@ -8,10 +8,36 @@
 library;
 
 import 'package:chess_vectors_flutter/chess_vectors_flutter.dart';
+import 'package:country_pickers/country_pickers.dart';
 import 'package:flutter/material.dart';
 import 'package:random_avatar/random_avatar.dart';
 
 import '../../core/theme/app_theme.dart';
+
+/// Renders a flag from either an emoji string (legacy) or an ISO-3166
+/// alpha-2 code (real flag image via `country_pickers`).
+Widget flagWidget(String flag, double size) {
+  if (flag.isEmpty || flag == 'cpu') return const SizedBox.shrink();
+  if (flag.length <= 2) {
+    try {
+      final c = CountryPickerUtils.getCountryByIsoCode(flag.toUpperCase());
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(2),
+        child: SizedBox(
+          width: size,
+          height: size * 0.72,
+          child: FittedBox(
+            fit: BoxFit.fill,
+            child: CountryPickerUtils.getDefaultFlagImage(c),
+          ),
+        ),
+      );
+    } catch (_) {
+      // unknown ISO → fall through to text
+    }
+  }
+  return Text(flag, style: TextStyle(fontSize: size));
+}
 
 const Map<int, String> _pieceFiles = {
   1: 'pawn',
@@ -132,7 +158,7 @@ class AvatarWidget extends StatelessWidget {
           Positioned(
             right: -2,
             bottom: -2,
-            child: Text(flag, style: TextStyle(fontSize: radius * 0.7)),
+            child: flagWidget(flag, radius * 0.7),
           ),
       ],
     );

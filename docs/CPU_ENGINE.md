@@ -81,6 +81,14 @@ The Arena brain keeps its own upgrades as the universal fallback:
    keeps the last finished depth on timeout — safe at any budget.
 3. **Expert tier**: `CpuDifficulty.forElo(≥1800)` → depth 4, 2.2 s budget.
 
+## v6: launch-strength evaluation
+
+`evaluate()` now also scores bishop pair (+30), doubled (−12) and isolated
+(−10) pawns, and passed pawns (+4..+70 by rank), so the fallback brain
+plays real plans when Stockfish isn't available. The book covers 19 main
+lines for both colors; Expert searches to depth 5 (2.6 s, iterative
+deepening keeps it safe).
+
 ## v4 upgrades
 
 - **Piece images**: `PieceWidget` renders the MIT `chess_interface`

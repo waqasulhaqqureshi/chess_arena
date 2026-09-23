@@ -9,6 +9,7 @@ import 'dart:math';
 import 'package:flutter/foundation.dart';
 
 import '../../core/utils/elo.dart';
+import '../../services/matchmaking_service.dart';
 import '../../services/sound_service.dart';
 import '../local/database.dart';
 import '../remote/supabase_service.dart';
@@ -312,14 +313,8 @@ class ArenaRepository extends ChangeNotifier {
 
   /// Random guest identity for simulated online opponents.
   Map<String, Object?> randomSimulatedOpponent(int nearRating) {
-    const names = [
-      'Guest1380511', 'Guest882341', 'Guest552310', 'Guest771209',
-      'Guest340987', 'Guest120455', 'Guest908172', 'Guest615034',
-    ];
-    const flags = ['🇵🇱', '🇮🇳', '🇺🇸', '🇲🇽', '🇪🇸', '🇷🇺', '🇧🇷', '🇵🇰'];
-    final i = _rng.nextInt(names.length);
-    final elo = (nearRating + _rng.nextInt(401) - 200).clamp(400, 2400);
-    return {'name': names[i], 'flag': flags[i], 'rating': elo};
+    final id = MatchmakingService.simulatedHuman(nearRating);
+    return {'name': id.name, 'flag': id.flagIso, 'rating': id.rating};
   }
 
   void _syncProfile() {

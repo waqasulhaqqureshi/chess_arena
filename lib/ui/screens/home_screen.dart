@@ -14,6 +14,7 @@ import '../../data/repository/arena_repository.dart';
 import '../../data/time_controls.dart';
 import '../../engine/chess_ai.dart';
 import '../../game/game_controller.dart';
+import '../../services/matchmaking_service.dart';
 import '../../services/sound_service.dart';
 import '../dialogs/app_dialogs.dart';
 import '../widgets/app_widgets.dart';
@@ -602,7 +603,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _findOpponent(
       BuildContext context, ArenaRepository repo) async {
     SoundService.click();
-    // Simulated matchmaking (real lobby arrives with online update).
     if (!context.mounted) return;
     showDialog(
       context: context,
@@ -641,21 +641,29 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ),
     );
-    await Future.delayed(const Duration(milliseconds: 1600));
+    // Priority #1: a real online channel (null until the lobby ships).
+    var identity = await MatchmakingService.tryOnline(repo.rating);
+    if (identity == null) {
+      // Priority #2: seat a believable human stand-in instantly so a
+      // brand-new Play Store install always finds an opponent.
+      await Future.delayed(const Duration(milliseconds: 1400));
+      identity = MatchmakingService.simulatedHuman(
+        repo.rating,
+        formBoost: MatchmakingService.formBoostFor(repo.form),
+      );
+    }
     if (!context.mounted) return;
     Navigator.of(context).pop(); // close matchmaking
-    final opp = repo.randomSimulatedOpponent(repo.rating);
-    final elo = opp['rating']! as int;
     final asWhite = DateTime.now().millisecond % 2 == 0;
     _startGame(
       context,
       repo,
       GameSetup(
         rated: true,
-        opponentName: opp['name']! as String,
-        opponentFlag: opp['flag']! as String,
-        opponentRating: elo,
-        difficulty: CpuDifficulty.forElo(elo),
+        opponentName: identity.name,
+        opponentFlag: identity.flagIso,
+        opponentRating: identity.rating,
+        difficulty: CpuDifficulty.forElo(identity.rating),
         playerIsWhite: asWhite,
         timeControl: timeControlById(repo.timeControls.first),
       ),

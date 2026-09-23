@@ -102,6 +102,11 @@ int evaluate(ChessGame g) {
   var score = 0;
   var wMat = 0, bMat = 0;
   var wPawns = false, bPawns = false;
+  var wBishops = 0, bBishops = 0;
+  var wPawnFiles = 0, bPawnFiles = 0;
+  var wPawnCount = 0, bPawnCount = 0;
+  final wPawnSq = <int>[];
+  final bPawnSq = <int>[];
   var wk = -1, bk = -1;
   for (var sq = 0; sq < 64; sq++) {
     final p = g.board[sq];
@@ -112,10 +117,39 @@ int evaluate(ChessGame g) {
     if (p == king) {
       if (white) { wk = sq; } else { bk = sq; }
     } else if (p == pawn) {
-      if (white) { wPawns = true; } else { bPawns = true; }
+      if (white) {
+        wPawns = true;
+        wPawnFiles |= 1 << fileOf(sq);
+        wPawnCount++;
+        wPawnSq.add(sq);
+      } else {
+        bPawns = true;
+        bPawnFiles |= 1 << fileOf(sq);
+        bPawnCount++;
+        bPawnSq.add(sq);
+      }
     } else {
-      if (white) { wMat += _pieceValues[p]!; } else { bMat += _pieceValues[-p]!; }
+      if (white) {
+        wMat += _pieceValues[p]!;
+        if (p == bishop) wBishops++;
+      } else {
+        bMat += _pieceValues[-p]!;
+        if (p == -bishop) bBishops++;
+      }
     }
+  }
+  // Bishop pair.
+  if (wBishops >= 2) score += 30;
+  if (bBishops >= 2) score -= 30;
+  // Doubled + isolated pawns.
+  score -= _pawnPenalty(wPawnFiles, wPawnCount);
+  score += _pawnPenalty(bPawnFiles, bPawnCount);
+  // Passed pawns — the engine plays to create and stop them.
+  for (final s in wPawnSq) {
+    if (_passedWhite(s, bPawnSq)) score += _passedBonus[rankOf(s)];
+  }
+  for (final s in bPawnSq) {
+    if (_passedBlack(s, wPawnSq)) score -= _passedBonus[rankOf(s)];
   }
   // Endgame king squeeze: with a lone king vs mating material, push the
   // lone king to the edge and bring the winning king closer — gives the
@@ -144,6 +178,44 @@ int _chebyshev(int a, int b) {
   final df = (fileOf(a) - fileOf(b)).abs();
   final dr = (rankOf(a) - rankOf(b)).abs();
   return df > dr ? df : dr;
+}
+
+int _pop8(int mask) {
+  var n = 0;
+  for (var i = 0; i < 8; i++) {
+    if ((mask & (1 << i)) != 0) n++;
+  }
+  return n;
+}
+
+/// Doubled (12 cp each) + isolated (10 cp each) pawn penalties.
+int _pawnPenalty(int files, int count) {
+  final doubled = count - _pop8(files);
+  var isolated = 0;
+  for (var f = 0; f < 8; f++) {
+    if ((files & (1 << f)) == 0) continue;
+    final adj = ((f > 0) ? 1 << (f - 1) : 0) | ((f < 7) ? 1 << (f + 1) : 0);
+    if ((files & adj) == 0) isolated++;
+  }
+  return doubled * 12 + isolated * 10;
+}
+
+const List<int> _passedBonus = [0, 4, 8, 14, 24, 40, 70, 0];
+
+bool _passedWhite(int sq, List<int> enemyPawns) {
+  final f = fileOf(sq), r = rankOf(sq);
+  for (final e in enemyPawns) {
+    if (rankOf(e) > r && (fileOf(e) - f).abs() <= 1) return false;
+  }
+  return true;
+}
+
+bool _passedBlack(int sq, List<int> enemyPawns) {
+  final f = fileOf(sq), r = rankOf(sq);
+  for (final e in enemyPawns) {
+    if (rankOf(e) < r && (fileOf(e) - f).abs() <= 1) return false;
+  }
+  return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -202,11 +274,11 @@ class CpuDifficulty {
   /// ELO range ~400..2100 maps to depth 1..3 + blunder/noise scaling.
   factory CpuDifficulty.forElo(int elo) {
     final e = elo.clamp(400, 2100);
-    final depth = e < 700 ? 1 : (e < 1250 ? 2 : (e < 1800 ? 3 : 4));
+    final depth = e < 700 ? 1 : (e < 1250 ? 2 : (e < 1800 ? 3 : 5));
     final blunder = ((1350 - e) / 2200).clamp(0.0, 0.30);
     final noise = ((1500 - e) / 7).clamp(0.0, 150.0).round();
     final q = e < 700 ? 2 : (e < 1250 ? 4 : 6);
-    final budget = e < 700 ? 250 : (e < 1250 ? 600 : (e < 1800 ? 1400 : 2200));
+    final budget = e < 700 ? 250 : (e < 1250 ? 600 : (e < 1800 ? 1400 : 2600));
     final name = e < 700
         ? 'Easy'
         : (e < 1000 ? 'Medium' : (e < 1500 ? 'Hard' : 'Expert'));
@@ -378,14 +450,24 @@ class _Searcher {
   static String uciOf(ChessMove m) => '${_sq(m.from)}${_sq(m.to)}';
 
   static const Map<String, List<String>> _book = {
-    '': ['e2e4', 'd2d4', 'g1f3'],
+    '': ['e2e4', 'd2d4', 'g1f3', 'c2c4'],
     'e2e4': ['e7e5', 'c7c5', 'e7e6'],
     'd2d4': ['d7d5', 'g8f6'],
+    'c2c4': ['e7e5', 'g8f6', 'e7e6'],
     'e2e4 e7e5': ['g1f3', 'b1c3', 'f1c4'],
     'e2e4 e7e5 g1f3': ['b8c6', 'g8f6'],
+    'e2e4 e7e5 g1f3 b8c6': ['f1b5', 'f1c4'],
+    'e2e4 e7e5 g1f3 b8c6 f1b5': ['a7a6', 'g8f6'],
+    'e2e4 e7e5 g1f3 g8f6': ['f3e5', 'b1c3'],
     'e2e4 c7c5': ['g1f3', 'b1c3'],
+    'e2e4 c7c5 g1f3': ['d7d6', 'b8c6', 'e7e6'],
+    'e2e4 c7c5 g1f3 d7d6': ['d2d4'],
+    'e2e4 e7e6': ['d2d4'],
+    'e2e4 e7e6 d2d4': ['d7d5'],
     'd2d4 d7d5': ['c2c4', 'g1f3'],
+    'd2d4 d7d5 c2c4': ['e7e6', 'c7c6'],
     'd2d4 g8f6': ['c2c4', 'g1f3'],
+    'd2d4 g8f6 c2c4': ['e7e6', 'g7g6'],
   };
 
   ChessMove? _bookMove(ChessGame g, List<ChessMove> moves) {

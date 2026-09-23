@@ -80,3 +80,8 @@ Plain Maps only — no codegen adapters.
   `CpuDifficulty` are fully JSON-serializable for this.
 - **Chat simulation (v3)**: scripted opponent lines live in
   `GameController` (`sendChat`, `unread`); UI badge on the game top bar.
+- **Matchmaking (v6)**: `MatchmakingService.tryOnline` (Supabase lobby,
+  null until online update) → `simulatedHuman` fallback with realistic
+  identity (name pool + ISO flag + rating near player ± form boost).
+  Flags render via `country_pickers` (`flagWidget` in `piece_widget.dart`);
+  avatars via `random_avatar` identicons seeded by the name.
