@@ -23,7 +23,7 @@ import '../widgets/piece_widget.dart';
 // dim Cancel + orange action side by side.
 // ---------------------------------------------------------------------------
 
-Future<bool> showVideoConfirm(
+Future<bool?> showVideoConfirm(
   BuildContext context, {
   required String title,
   required String subtitle,

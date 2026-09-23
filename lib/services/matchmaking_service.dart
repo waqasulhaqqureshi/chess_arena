@@ -20,7 +20,8 @@ class OpponentIdentity {
   final String name;
   final String flagIso; // ISO-3166 alpha-2, rendered via country_pickers
   final bool female;
-  const OpponentIdentity(this.name, this.flagIso, this.female);
+  final int rating;
+  const OpponentIdentity(this.name, this.flagIso, this.female, this.rating);
 }
 
 class _ZoneFlag {
@@ -31,7 +32,8 @@ class _ZoneFlag {
 
 class MatchmakingService {
   /// Name cultures we seat — flag always matches the name's zone.
-  static const _pool = [
+  /// (final, not const: Zone accessors are not compile-time constants.)
+  static final List<_ZoneFlag> _pool = [
     _ZoneFlag(Zone.india, 'IN'),
     _ZoneFlag(Zone.us, 'US'),
     _ZoneFlag(Zone.uk, 'GB'),
@@ -84,7 +86,7 @@ class MatchmakingService {
     }
     final elo =
         (nearRating + _rng.nextInt(301) - 150 + formBoost).clamp(400, 2400);
-    return OpponentIdentity(name, pick.iso, female);
+    return OpponentIdentity(name, pick.iso, female, elo);
   }
 
   /// Winning streak → slightly tougher opponents; losing streak → gentler.

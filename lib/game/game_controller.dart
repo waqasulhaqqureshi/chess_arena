@@ -464,7 +464,7 @@ class GameController extends ChangeNotifier {
     lastMove = chosen;
     _moveLog.add([chosen.from, chosen.to, chosen.promotion]);
     _afterMoveClock(moverWhite);
-    _moveSound(res.move!, wasCapture);
+    _moveSound(chosen, wasCapture);
     _saveLive();
     _maybeCpuOfferDraw();
     notifyListeners();
