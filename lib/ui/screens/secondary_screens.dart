@@ -84,7 +84,7 @@ class FriendsScreen extends StatelessWidget {
 // ---------------------------------------------------------------- profile
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({super.key});
+  const ProfileScreen();
 
   @override
   Widget build(BuildContext context) {
@@ -94,116 +94,144 @@ class ProfileScreen extends StatelessWidget {
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            Text('Profile', style: AppTheme.title22),
+            const SizedBox(height: 12),
+            // Compact stats strip.
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                Text('Profile', style: AppTheme.title22),
-                const Spacer(),
-                IconButton(
-                  icon: const Icon(Icons.settings, color: Colors.white),
-                  onPressed: () {
-                    SoundService.click();
-                    showSettingsDialog(context);
-                  },
-                ),
+                _chip('${repo.rating}', 'rating'),
+                _chip('${repo.coins}', 'coins', coin: true),
+                _chip('${repo.games}', 'games'),
+                _chip('${repo.wins}W ${repo.draws}D ${repo.losses}L', 'record'),
+                _chip('${repo.streak} streak', 'form'),
               ],
+            ),
+            const SizedBox(height: 16),
+            const SectionLabel('Personalization'),
+            const SizedBox(height: 8),
+            ArenaCard(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  _profileRow(
+                    context,
+                    icon: Icons.palette,
+                    iconColor: const Color(0xFF9B7BF5),
+                    title: 'Customize',
+                    subtitle: 'Avatar, board, pieces',
+                    onTap: () => showCustomizeSheet(context),
+                  ),
+                  const Divider(color: AppColors.divider, height: 1),
+                  _profileRow(
+                    context,
+                    icon: Icons.person,
+                    iconColor: const Color(0xFF3FA7FF),
+                    title: 'Account',
+                    subtitle: 'Manage your account',
+                    onTap: () => showArenaSnack(context,
+                        'Accounts arrive with the online update'),
+                  ),
+                  const Divider(color: AppColors.divider, height: 1),
+                  _profileRow(
+                    context,
+                    icon: Icons.lock,
+                    iconColor: AppColors.gold,
+                    title: 'Privacy',
+                    subtitle: 'Manage consent',
+                    onTap: () => showArenaSnack(context,
+                        'Consent manager arrives with ads integration'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            const SectionLabel('Help and feedback'),
+            const SizedBox(height: 8),
+            ArenaCard(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  _profileRow(
+                    context,
+                    icon: Icons.menu_book,
+                    iconColor: AppColors.green,
+                    title: 'Rules',
+                    subtitle: 'How to play chess',
+                    onTap: () => showRulesDialog(context),
+                  ),
+                  const Divider(color: AppColors.divider, height: 1),
+                  _profileRow(
+                    context,
+                    icon: Icons.bar_chart,
+                    iconColor: AppColors.orange,
+                    title: 'Community Poll',
+                    subtitle: 'Make your voice heard',
+                    onTap: () => showArenaSnack(
+                        context, 'Polls arrive with the online update'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            const SectionLabel('Remove ads'),
+            const SizedBox(height: 8),
+            GestureDetector(
+              onTap: () => showArenaSnack(context,
+                  'Google Play billing arrives with the online update'),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [
+                    AppColors.orangeLight,
+                    AppColors.orangeDark
+                  ]),
+                  borderRadius: BorderRadius.circular(12),
+                  border: const Border(
+                      bottom:
+                          BorderSide(color: AppColors.orangeDeep, width: 3)),
+                ),
+                child: const Column(
+                  children: [
+                    Text(
+                      'Remove Ads – Rs 550.00 / month',
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white),
+                    ),
+                    SizedBox(height: 2),
+                    Text(
+                      'Cancel anytime in Google Play',
+                      style: TextStyle(fontSize: 12, color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
             ),
             const SizedBox(height: 8),
-            AvatarWidget(
-                name: repo.name, flag: repo.flagEmoji, radius: 40),
-            const SizedBox(height: 10),
-            Text(repo.name,
-                style:
-                    const TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
-            GestureDetector(
-              onTap: () {
-                SoundService.click();
-                repo.cycleFlag();
-              },
-              child: Text('Tap flag to change: ${repo.flagEmoji}',
-                  style: AppTheme.dim13),
-            ),
-            const SizedBox(height: 10),
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: online
-                    ? AppColors.green.withOpacity( 0.25)
-                    : AppColors.card,
-                borderRadius: BorderRadius.circular(20),
-              ),
+            const Center(
               child: Text(
-                online
-                    ? '● Supabase: Online '
-                    : '● Supabase: Local only (offline)',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  color: online
-                      ? AppColors.greenBright
-                      : AppColors.textDim,
-                ),
+                'By subscribing you agree to the Terms of Use\nand Privacy Policy.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: AppColors.textDim),
               ),
             ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                    child: _statCard(
-                        const Icon(Icons.bar_chart,
-                            size: 24, color: AppColors.orange),
-                        'Rating',
-                        '${repo.rating}')),
-                const SizedBox(width: 10),
-                Expanded(
-                    child:
-                        _statCard(SvgPicture.asset('assets/icons/coin.svg', width: 24, height: 24), 'Coins', '${repo.coins}')),
-              ],
+            const SizedBox(height: 4),
+            const Center(
+              child: Text(
+                'Terms of Use & Privacy Policy',
+                style: TextStyle(fontSize: 12, color: AppColors.textFaint),
+              ),
             ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                    child: _statCard(
-                        const Icon(Icons.videogame_asset,
-                            size: 24, color: Color(0xFF3FA7FF)),
-                        'Games',
-                        '${repo.games}')),
-                const SizedBox(width: 10),
-                Expanded(
-                    child: _statCard(
-                        const Icon(Icons.local_fire_department,
-                            size: 24, color: AppColors.orange),
-                        'Streak',
-                        '${repo.streak}')),
-                const SizedBox(width: 10),
-                Expanded(
-                    child: _statCard(const Icon(Icons.extension, size: 24, color: Color(0xFF9B7BF5)), 'Puzzles',
-                        '${repo.puzzlesSolved}')),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                    child:
-                        _statCard(const Icon(Icons.emoji_events, size: 24, color: AppColors.gold), 'Wins', '${repo.wins}')),
-                const SizedBox(width: 10),
-                Expanded(
-                    child: _statCard(
-                        const Icon(Icons.handshake,
-                            size: 24, color: AppColors.textDim),
-                        'Draws',
-                        '${repo.draws}')),
-                const SizedBox(width: 10),
-                Expanded(
-                    child: _statCard(
-                        const Icon(Icons.sentiment_dissatisfied,
-                            size: 24, color: AppColors.red),
-                        'Losses',
-                        '${repo.losses}')),
-              ],
+            const SizedBox(height: 6),
+            Text(
+              'v 1.2.0 · ${online ? 'Supabase online' : 'offline mode'}',
+              style: AppTheme.dim12,
             ),
             const SizedBox(height: 14),
             ArenaCard(
@@ -229,20 +257,78 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _statCard(Widget icon, String label, String value) {
-    return ArenaCard(
-      child: Column(
+  Widget _chip(String value, String label, {bool coin = false}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          icon,
-          const SizedBox(height: 4),
+          if (coin) ...[
+            SvgPicture.asset('assets/icons/coin.svg', width: 14, height: 14),
+            const SizedBox(width: 4),
+          ],
           Text(value,
               style: const TextStyle(
-                  fontSize: 18, fontWeight: FontWeight.w800)),
+                  fontSize: 13, fontWeight: FontWeight.w800)),
+          const SizedBox(width: 6),
           Text(label, style: AppTheme.dim12),
         ],
       ),
     );
   }
+
+  Widget _profileRow(
+    BuildContext context, {
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: () {
+        SoundService.click();
+        onTap();
+      },
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(0.22),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 22, color: iconColor),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.w800)),
+                  Text(subtitle, style: AppTheme.dim12),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right,
+                color: AppColors.textDim, size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+
 
   List<Widget> _recentGames() {
     final games = Database.recentGames(limit: 5);

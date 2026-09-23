@@ -22,6 +22,7 @@ class ChessBoardWidget extends StatelessWidget {
   final bool showLastMove;
   final bool animate;
   final int animKey; // bump to animate the last-moved piece
+  final BoardTheme theme;
   final void Function(int sq) onTap;
 
   const ChessBoardWidget({
@@ -40,6 +41,7 @@ class ChessBoardWidget extends StatelessWidget {
     this.showLastMove = true,
     this.animate = true,
     this.animKey = 0,
+    this.theme = BoardTheme.brown,
   });
 
   @override
@@ -48,7 +50,7 @@ class ChessBoardWidget extends StatelessWidget {
       aspectRatio: 1,
       child: Container(
         decoration: BoxDecoration(
-          border: Border.all(color: AppColors.boardFrame, width: 6),
+          border: Border.all(color: theme.frame, width: 6),
           borderRadius: BorderRadius.circular(4),
         ),
         child: LayoutBuilder(
@@ -121,14 +123,14 @@ class ChessBoardWidget extends StatelessWidget {
         (orientationWhite && fileOf(sq) == 0);
 
     final coordColor = isLight
-        ? AppColors.darkSq.withOpacity( 0.9)
-        : AppColors.lightSq.withOpacity( 0.9);
+        ? theme.dark.withOpacity( 0.9)
+        : theme.light.withOpacity( 0.9);
 
     return GestureDetector(
       onTap: () => onTap(sq),
       child: AnimatedContainer(
         duration: Duration(milliseconds: animate ? 150 : 0),
-        color: isLight ? AppColors.lightSq : AppColors.darkSq,
+        color: isLight ? theme.light : theme.dark,
         child: Stack(
           children: [
             if (overlay != Colors.transparent)
@@ -226,6 +228,66 @@ class ChessBoardWidget extends StatelessWidget {
                   ),
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Tiny static board rendered from a FEN (puzzle list thumbnails).
+class MiniBoard extends StatelessWidget {
+  final String fen;
+  final double size;
+  final BoardTheme theme;
+  const MiniBoard({
+    super.key,
+    required this.fen,
+    this.size = 64,
+    this.theme = BoardTheme.brown,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final g = ChessGame.fromFen(fen);
+    final sq = size / 8;
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(6),
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: Stack(
+          children: [
+            Column(
+              children: List.generate(8, (r) {
+                return Expanded(
+                  child: Row(
+                    children: List.generate(8, (f) {
+                      final s = (7 - r) * 8 + f;
+                      final light = (f + (7 - r)) % 2 == 1;
+                      return Expanded(
+                        child: Container(color: light ? theme.light : theme.dark),
+                      );
+                    }),
+                  ),
+                );
+              }),
+            ),
+            ...List.generate(64, (s) {
+              final p = g.board[s];
+              if (p == 0) return const SizedBox.shrink();
+              final r = rankOf(s);
+              final f = fileOf(s);
+              return Positioned(
+                left: f * sq,
+                top: (7 - r) * sq,
+                width: sq,
+                height: sq,
+                child: Center(
+                  child: PieceWidget(piece: p, size: sq * 0.92),
+                ),
+              );
+            }),
           ],
         ),
       ),

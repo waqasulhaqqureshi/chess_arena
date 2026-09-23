@@ -48,6 +48,14 @@ scale with your rating: depth 1 → 2 → 3, blunder 30% → 0%, noise ±150 →
 - **Time fairness**: `CpuBrain.think(..., clockMs:, incrementMs:)` scales
   the budget to `clock/25 + increment` (min 80 ms), so Hard can't flag
   itself in Bullet with 0.5 s left.
+- **Endgame squeeze (v3)**: `evaluate()` adds king-edge + king-proximity
+  terms when one side has a lone king vs mating material, so the CPU
+  drives mates home instead of shuffling.
+- **Human pacing (v3)**: the controller delays applying the computed reply
+  by 0.6–2.2 s (scaled by ELO; <0.5 s when the CPU clock is low), so
+  opponents feel human instead of instant.
+- **CPU draw offers (v3)**: after move 30 in rated games, |eval| < 15 cp
+  triggers a once-per-game draw offer (chat line + accept/decline dialog).
 
 ## Threading (`cpu_brain.dart`)
 

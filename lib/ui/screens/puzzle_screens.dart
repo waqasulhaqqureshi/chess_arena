@@ -63,23 +63,37 @@ class PuzzleListScreen extends StatelessWidget {
                       horizontal: 14, vertical: 10),
                   child: ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: Container(
-                      width: 44,
-                      height: 44,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: done
-                            ? AppColors.green
-                            : AppColors.cardLight,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: done
-                          ? const Icon(Icons.check, color: Colors.white)
-                          : Text(
-                              '#${p.id}',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w800),
+                    leading: SizedBox(
+                      width: 48,
+                      height: 48,
+                      child: Stack(
+                        children: [
+                          MiniBoard(fen: p.fen, size: 48),
+                          Positioned(
+                            right: 0,
+                            bottom: 0,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 4, vertical: 1),
+                              decoration: BoxDecoration(
+                                color: done
+                                    ? AppColors.green
+                                    : Colors.black87,
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: done
+                                  ? const Icon(Icons.check,
+                                      color: Colors.white, size: 10)
+                                  : Text(
+                                      '#${p.id}',
+                                      style: const TextStyle(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w800),
+                                    ),
                             ),
+                          ),
+                        ],
+                      ),
                     ),
                     title: Text(p.title,
                         style: const TextStyle(
@@ -182,6 +196,10 @@ class _PuzzleBody extends StatelessWidget {
                     .watch<SettingsController>()
                     .pieceAnimation,
                 animKey: c.game.moveHistory.length,
+                theme: BoardTheme.all[context
+                    .watch<SettingsController>()
+                    .boardTheme
+                    .clamp(0, BoardTheme.all.length - 1)],
               ),
             ),
             Padding(

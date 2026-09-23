@@ -74,3 +74,9 @@ Plain Maps only — no codegen adapters.
 - Hot paths (game screen) use `Selector` snapshots (`_BoardView`,
   `_ClockView`, `_InfoView`) + `RepaintBoundary` so the clock ticker never
   rebuilds the board; keep new per-tick widgets out of `watch` subtrees.
+- **Live-game snapshots (v3)**: `GameController` persists setup + move log
+  + clocks to Hive after every move (`repo.saveLiveGame`); `HomeScreen`
+  offers Resume on launch; snapshot cleared at game end. `GameSetup` and
+  `CpuDifficulty` are fully JSON-serializable for this.
+- **Chat simulation (v3)**: scripted opponent lines live in
+  `GameController` (`sendChat`, `unread`); UI badge on the game top bar.

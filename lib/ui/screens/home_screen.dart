@@ -2,6 +2,8 @@
 /// Play Online card, Play CPU / Puzzles / Watch / Highlights grid.
 library;
 
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
@@ -20,9 +22,56 @@ import 'game_screen.dart';
 import 'puzzle_screens.dart';
 import 'secondary_screens.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   final void Function(int tab) onTab;
   const HomeScreen({super.key, required this.onTab});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool _resumeAsked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _maybeResume());
+  }
+
+  /// Offers to continue a game that survived an app restart.
+  Future<void> _maybeResume() async {
+    if (_resumeAsked || !mounted) return;
+    _resumeAsked = true;
+    final repo = context.read<ArenaRepository>();
+    final json = repo.liveGameJson;
+    if (json == null) return;
+    Map<String, Object?> snap;
+    try {
+      snap = (jsonDecode(json) as Map).cast<String, Object?>();
+    } catch (_) {
+      repo.clearLiveGame();
+      return;
+    }
+    final setup = GameSetup.fromJson(
+        (snap['setup'] as Map).cast<String, Object?>());
+    final yes = await showVideoConfirm(
+      context,
+      title: 'Resume game?',
+      subtitle:
+          'Unfinished game vs ${setup.opponentName} (${setup.opponentRating})',
+      actionLabel: 'Resume',
+      cancelLabel: 'Discard',
+    );
+    if (!mounted) return;
+    if (yes == true) {
+      Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => ResumedGameScreen(snapshot: snap),
+      ));
+    } else {
+      repo.clearLiveGame();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -86,7 +135,7 @@ class HomeScreen extends StatelessWidget {
             icon: const Icon(Icons.bar_chart_rounded, color: Colors.white),
             onPressed: () {
               SoundService.click();
-              onTab(3); // profile stats
+              widget.onTab(3); // profile stats
             },
           ),
         ),
@@ -462,11 +511,11 @@ class HomeScreen extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                  child: _gridCell(context, Icons.computer, AppColors.orange, 'Play CPU',
+                  child: _gridCell(context, 'assets/img/tile_cpu.png', 'Play CPU',
                       onTap: () => _playCpu(context, repo))),
               Container(width: 1, height: 84, color: AppColors.divider),
               Expanded(
-                  child: _gridCell(context, Icons.extension, const Color(0xFF9B7BF5), 'Puzzles',
+                  child: _gridCell(context, 'assets/img/tile_puzzles.png', 'Puzzles',
                       onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
                               builder: (_) =>
@@ -477,13 +526,13 @@ class HomeScreen extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                  child: _gridCell(context, Icons.visibility, AppColors.greenBright, 'Watch',
+                  child: _gridCell(context, 'assets/img/tile_watch.png', 'Watch',
                       onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
                               builder: (_) => const WatchScreen())))),
               Container(width: 1, height: 84, color: AppColors.divider),
               Expanded(
-                  child: _gridCell(context, Icons.movie, AppColors.red, 'Highlights',
+                  child: _gridCell(context, 'assets/img/tile_highlights.png', 'Highlights',
                       onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
                               builder: (_) =>
@@ -495,8 +544,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _gridCell(
-      BuildContext context, IconData icon, Color color, String label,
+  Widget _gridCell(BuildContext context, String img, String label,
       {required VoidCallback onTap}) {
     return InkWell(
       onTap: () {
@@ -504,19 +552,20 @@ class HomeScreen extends StatelessWidget {
         onTap();
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 14),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Container(
-              width: 46,
-              height: 46,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.16),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, size: 28, color: color),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.asset(img, width: 46, height: 46, fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                        width: 46,
+                        height: 46,
+                        color: AppColors.cardLight,
+                        child: const Icon(Icons.extension,
+                            color: Colors.white),
+                      )),
             ),
             const SizedBox(width: 10),
             Text(label,
@@ -538,7 +587,8 @@ class HomeScreen extends StatelessWidget {
       context,
       repo,
       GameSetup(
-        rated: false,
+        rated: choice.competitive,
+        timed: choice.competitive, // casual CPU = friendly untimed (video)
         opponentName: 'CPU (${choice.difficulty.name})',
         opponentFlag: 'cpu',
         opponentRating: choice.difficulty.targetElo,
@@ -557,22 +607,37 @@ class HomeScreen extends StatelessWidget {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CircularProgressIndicator(color: AppColors.orange),
-            const SizedBox(height: 14),
-            Text('Finding opponent near ${repo.rating}…',
-                style:
-                    const TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 6),
-            Text(
-              'Simulated opponent · real matchmaking coming soon',
-              style: AppTheme.dim12,
-              textAlign: TextAlign.center,
-            ),
-          ],
+      barrierColor: Colors.black.withOpacity(0.6),
+      builder: (_) => Center(
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 44),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFF39607E),
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.5), blurRadius: 16),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Waiting for opponent',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 14),
+              const CircularProgressIndicator(color: Colors.white),
+              const SizedBox(height: 14),
+              Text(
+                'Matching near ${repo.rating} · real lobby online soon',
+                style: const TextStyle(
+                    fontSize: 12, fontWeight: FontWeight.w700),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
         ),
       ),
     );

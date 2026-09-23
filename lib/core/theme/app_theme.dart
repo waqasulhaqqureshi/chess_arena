@@ -36,6 +36,36 @@ class AppColors {
   static const blackPiece = Color(0xFF191410);
 }
 
+/// A selectable board color scheme (Customize → Board).
+class BoardTheme {
+  final String name;
+  final Color light;
+  final Color dark;
+  final Color frame;
+  const BoardTheme(this.name, this.light, this.dark, this.frame);
+
+  static const brown = BoardTheme(
+    'Classic wood',
+    Color(0xFFE3B778),
+    Color(0xFF7A4A21),
+    Color(0xFF3A2110),
+  );
+  static const green = BoardTheme(
+    'Tournament green',
+    Color(0xFFEAEED2),
+    Color(0xFF7B9552),
+    Color(0xFF3E4A2E),
+  );
+  static const slate = BoardTheme(
+    'Slate blue',
+    Color(0xFFDEE3E6),
+    Color(0xFF7C93A8),
+    Color(0xFF2C3A47),
+  );
+
+  static const List<BoardTheme> all = [brown, green, slate];
+}
+
 class AppTheme {
   static ThemeData dark() {
     final base = ThemeData.dark(useMaterial3: true);

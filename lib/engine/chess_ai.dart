@@ -100,14 +100,50 @@ int _pstIndex(int sq, bool white) {
 /// Static evaluation in centipawns, WHITE perspective.
 int evaluate(ChessGame g) {
   var score = 0;
+  var wMat = 0, bMat = 0;
+  var wPawns = false, bPawns = false;
+  var wk = -1, bk = -1;
   for (var sq = 0; sq < 64; sq++) {
     final p = g.board[sq];
     if (p == 0) continue;
     final white = p > 0;
     final v = _pieceValues[p.abs()]! + _pst[p.abs()]![_pstIndex(sq, white)];
     score += white ? v : -v;
+    if (p == king) {
+      if (white) { wk = sq; } else { bk = sq; }
+    } else if (p == pawn) {
+      if (white) { wPawns = true; } else { bPawns = true; }
+    } else {
+      if (white) { wMat += _pieceValues[p]!; } else { bMat += _pieceValues[-p]!; }
+    }
+  }
+  // Endgame king squeeze: with a lone king vs mating material, push the
+  // lone king to the edge and bring the winning king closer — gives the
+  // CPU real mating urgency instead of shuffling.
+  if (bk >= 0 && !bPawns && bMat == 0 && wMat >= 400 && wk >= 0) {
+    score += _centerDist[bk] * 6 + (7 - _chebyshev(wk, bk)) * 3;
+  } else if (wk >= 0 && !wPawns && wMat == 0 && bMat >= 400 && bk >= 0) {
+    score -= _centerDist[wk] * 6 + (7 - _chebyshev(wk, bk)) * 3;
   }
   return score;
+}
+
+/// 2x Chebyshev distance from the center (0 near center .. 7 corner).
+const List<int> _centerDist = [
+  7, 7, 7, 7, 7, 7, 7, 7,
+  7, 5, 5, 5, 5, 5, 5, 7,
+  7, 5, 3, 3, 3, 3, 5, 7,
+  7, 5, 3, 1, 1, 3, 5, 7,
+  7, 5, 3, 1, 1, 3, 5, 7,
+  7, 5, 3, 3, 3, 3, 5, 7,
+  7, 5, 5, 5, 5, 5, 5, 7,
+  7, 7, 7, 7, 7, 7, 7, 7,
+];
+
+int _chebyshev(int a, int b) {
+  final df = (fileOf(a) - fileOf(b)).abs();
+  final dr = (rankOf(a) - rankOf(b)).abs();
+  return df > dr ? df : dr;
 }
 
 // ---------------------------------------------------------------------------

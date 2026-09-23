@@ -1,4 +1,5 @@
 /// Player info bar above/below the board (avatar, name, rating, clock).
+/// Video parity: ringed avatar, "(First move)" tag, orange active tint.
 library;
 
 import 'package:flutter/material.dart';
@@ -13,6 +14,7 @@ class PlayerBar extends StatelessWidget {
   final String clockText;
   final bool active; // side to move → orange tint like the video
   final bool showClock;
+  final bool firstMove; // "(First move)" tag until that side has moved
 
   const PlayerBar({
     super.key,
@@ -22,6 +24,7 @@ class PlayerBar extends StatelessWidget {
     required this.clockText,
     this.active = false,
     this.showClock = true,
+    this.firstMove = false,
   });
 
   @override
@@ -29,7 +32,7 @@ class PlayerBar extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         gradient: active
             ? const LinearGradient(
@@ -39,7 +42,20 @@ class PlayerBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          AvatarWidget(name: name, flag: flag, radius: 20),
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 2),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.4),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: AvatarWidget(name: name, flag: flag, radius: 23),
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Column(
@@ -59,18 +75,31 @@ class PlayerBar extends StatelessWidget {
                 if (showClock)
                   Row(
                     children: [
-                      const Icon(Icons.timer, size: 14, color: AppColors.textDim),
+                      Icon(Icons.timer,
+                          size: 14,
+                          color: active ? Colors.white : AppColors.textDim),
                       const SizedBox(width: 4),
                       Text(
                         clockText,
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w800,
-                          color: active
-                              ? Colors.white
-                              : AppColors.textDim,
+                          color: active ? Colors.white : AppColors.textDim,
                         ),
                       ),
+                      if (firstMove) ...[
+                        const SizedBox(width: 6),
+                        Text(
+                          '(First move)',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: active
+                                ? Colors.white.withOpacity(0.85)
+                                : AppColors.textDim,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
               ],

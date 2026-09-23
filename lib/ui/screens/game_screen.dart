@@ -2,7 +2,7 @@
 ///
 /// Performance: the 100 ms clock ticker only rebuilds the tiny clock
 /// leaves — board / move-list subtrees are [Selector]-gated on immutable
-/// snapshots ([_BoardView], [_InfoView]) so they rebuild solely on moves.
+/// snapshots so they rebuild solely on moves.
 library;
 
 import 'package:flutter/material.dart';
@@ -36,30 +36,61 @@ class GameScreen extends StatelessWidget {
   }
 }
 
+/// Variant that rebuilds a persisted mid-game snapshot.
+class ResumedGameScreen extends StatelessWidget {
+  final Map<String, Object?> snapshot;
+  const ResumedGameScreen({super.key, required this.snapshot});
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (ctx) => GameController.resume(
+        repo: ctx.read<ArenaRepository>(),
+        settings: ctx.read<SettingsController>(),
+        snapshot: snapshot,
+      ),
+      child: const _GameBody(),
+    );
+  }
+}
+
 // ---------------------------------------------------------------- snapshots
 
 class _TopState {
   final bool thinking;
   final bool over;
-  const _TopState(this.thinking, this.over);
+  final bool canTakeback;
+  final int unread;
+  final bool drawOffer;
+  const _TopState(
+      this.thinking, this.over, this.canTakeback, this.unread, this.drawOffer);
 
   @override
   bool operator ==(Object o) =>
-      o is _TopState && thinking == o.thinking && over == o.over;
+      o is _TopState &&
+      thinking == o.thinking &&
+      over == o.over &&
+      canTakeback == o.canTakeback &&
+      unread == o.unread &&
+      drawOffer == o.drawOffer;
   @override
-  int get hashCode => thinking.hashCode ^ over.hashCode;
+  int get hashCode => Object.hash(thinking, over, canTakeback, unread);
 }
 
 class _ClockView {
   final double ms;
   final bool active;
-  const _ClockView(this.ms, this.active);
+  final bool firstMove;
+  const _ClockView(this.ms, this.active, this.firstMove);
 
   @override
   bool operator ==(Object o) =>
-      o is _ClockView && ms == o.ms && active == o.active;
+      o is _ClockView &&
+      ms == o.ms &&
+      active == o.active &&
+      firstMove == o.firstMove;
   @override
-  int get hashCode => ms.hashCode ^ active.hashCode;
+  int get hashCode => Object.hash(ms, active, firstMove);
 }
 
 class _BoardView {
@@ -73,6 +104,7 @@ class _BoardView {
   final int? pendT;
   final bool showLast;
   final bool animate;
+  final int themeIdx;
   const _BoardView({
     required this.len,
     required this.sel,
@@ -84,9 +116,11 @@ class _BoardView {
     required this.pendT,
     required this.showLast,
     required this.animate,
+    required this.themeIdx,
   });
 
-  factory _BoardView.from(GameController c, bool showLast, bool animate) {
+  factory _BoardView.from(
+      GameController c, bool showLast, bool animate, int themeIdx) {
     return _BoardView(
       len: c.game.moveHistory.length,
       sel: c.selected,
@@ -100,6 +134,7 @@ class _BoardView {
       pendT: c.pendingTo,
       showLast: showLast,
       animate: animate,
+      themeIdx: themeIdx,
     );
   }
 
@@ -115,11 +150,12 @@ class _BoardView {
       pendF == o.pendF &&
       pendT == o.pendT &&
       showLast == o.showLast &&
-      animate == o.animate;
+      animate == o.animate &&
+      themeIdx == o.themeIdx;
 
   @override
-  int get hashCode => Object.hash(
-      len, sel, targets, lastFrom, lastTo, check, pendF, pendT, showLast);
+  int get hashCode => Object.hash(len, sel, targets, lastFrom, lastTo, check,
+      pendF, pendT, showLast, themeIdx);
 }
 
 class _InfoView {
@@ -162,6 +198,7 @@ class _GameBody extends StatefulWidget {
 class _GameBodyState extends State<_GameBody> {
   bool _promoOpen = false;
   bool _overOpen = false;
+  bool _drawOpen = false;
 
   @override
   void initState() {
@@ -192,12 +229,27 @@ class _GameBodyState extends State<_GameBody> {
         await c.answerPromotion(pick);
       });
     }
+    if (c.cpuDrawOffer && !_drawOpen) {
+      _drawOpen = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        final accept = await showVideoConfirm(
+          context,
+          title: 'Draw offered',
+          subtitle: '${c.setup.opponentName} offers a draw',
+          actionLabel: 'Accept',
+          cancelLabel: 'Decline',
+        );
+        _drawOpen = false;
+        await c.answerCpuDraw(accept == true);
+      });
+    }
     if (c.gameOverInfo != null && !_overOpen) {
       _overOpen = true;
       WidgetsBinding.instance.addPostFrameCallback((_) async {
         if (!mounted || c.gameOverInfo == null) return;
-        final action = await showGameOverDialog(
-            context, c.gameOverInfo!, c.setup);
+        final action =
+            await showGameOverDialog(context, c.gameOverInfo!, c.setup);
         if (!mounted) return;
         if (action == 'rematch') {
           final setup = c.setup;
@@ -206,6 +258,7 @@ class _GameBodyState extends State<_GameBody> {
               builder: (_) => GameScreen(
                 setup: GameSetup(
                   rated: setup.rated,
+                  timed: setup.timed,
                   opponentName: setup.opponentName,
                   opponentFlag: setup.opponentFlag,
                   opponentRating: setup.opponentRating,
@@ -237,102 +290,156 @@ class _GameBodyState extends State<_GameBody> {
           ),
         ),
         child: SafeArea(
-          child: Column(
+          child: Stack(
             children: [
-              Selector<GameController, _TopState>(
-                selector: (_, c) => _TopState(c.cpuThinking, c.isGameOver),
-                builder: (_, v, __) => _topBar(context, v),
-              ),
-              // Opponent bar (rebuilds on clock ticks only).
-              Selector<GameController, _ClockView>(
-                selector: (_, c) => _ClockView(
-                  setup.playerIsWhite ? c.blackMs : c.whiteMs,
-                  !c.isGameOver &&
-                      c.game.whiteToMove == !setup.playerIsWhite,
-                ),
-                builder: (_, clock, __) => PlayerBar(
-                  name: setup.opponentName,
-                  flag: setup.opponentFlag,
-                  rating: setup.opponentRating,
-                  clockText: formatClock(clock.ms),
-                  active: clock.active,
-                ),
-              ),
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                child: RepaintBoundary(
-                  child: Selector2<GameController, SettingsController,
-                      _BoardView>(
-                    selector: (_, c, s) => _BoardView.from(
-                        c, s.showLastMove, s.pieceAnimation),
-                    builder: (_, v, __) {
-                      final c = context.read<GameController>();
-                      return ChessBoardWidget(
-                        game: c.game,
-                        orientationWhite: setup.playerIsWhite,
-                        onTap: c.tapSquare,
-                        selected: v.sel,
-                        selectedMoves: c.selectedMoves,
-                        lastMove: c.lastMove,
-                        checkSquare: v.check,
-                        pendingFrom: v.pendF,
-                        pendingTo: v.pendT,
-                        showLastMove: v.showLast,
-                        animate: v.animate,
-                        animKey: v.len,
+              Column(
+                children: [
+                  Selector<GameController, _TopState>(
+                    selector: (_, c) => _TopState(c.cpuThinking, c.isGameOver,
+                        c.canTakeback, c.unread, c.cpuDrawOffer),
+                    builder: (_, v, __) => _topBar(context, v),
+                  ),
+                  // Opponent bar (rebuilds on clock ticks only).
+                  Selector<GameController, _ClockView>(
+                    selector: (_, c) => _ClockView(
+                      setup.playerIsWhite ? c.blackMs : c.whiteMs,
+                      !c.isGameOver &&
+                          c.game.whiteToMove == !setup.playerIsWhite,
+                      !c.cpuHasMoved,
+                    ),
+                    builder: (_, clock, __) => PlayerBar(
+                      name: setup.opponentName,
+                      flag: setup.opponentFlag,
+                      rating: setup.opponentRating,
+                      clockText: formatClock(clock.ms),
+                      active: clock.active,
+                      showClock: setup.timed,
+                      firstMove: clock.firstMove,
+                    ),
+                  ),
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    child: RepaintBoundary(
+                      child: Selector2<GameController, SettingsController,
+                          _BoardView>(
+                        selector: (_, c, s) => _BoardView.from(
+                            c, s.showLastMove, s.pieceAnimation, s.boardTheme),
+                        builder: (_, v, __) {
+                          final c = context.read<GameController>();
+                          return ChessBoardWidget(
+                            game: c.game,
+                            orientationWhite: setup.playerIsWhite,
+                            onTap: c.tapSquare,
+                            selected: v.sel,
+                            selectedMoves: c.selectedMoves,
+                            lastMove: c.lastMove,
+                            checkSquare: v.check,
+                            pendingFrom: v.pendF,
+                            pendingTo: v.pendT,
+                            showLastMove: v.showLast,
+                            animate: v.animate,
+                            animKey: v.len,
+                            theme: BoardTheme.all[
+                                v.themeIdx.clamp(0, BoardTheme.all.length - 1)],
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  // Player bar (rebuilds on clock ticks only).
+                  Selector<GameController, _ClockView>(
+                    selector: (_, c) => _ClockView(
+                      setup.playerIsWhite ? c.whiteMs : c.blackMs,
+                      !c.isGameOver &&
+                          c.game.whiteToMove == setup.playerIsWhite,
+                      !c.playerHasMoved,
+                    ),
+                    builder: (_, clock, __) {
+                      final repo = context.watch<ArenaRepository>();
+                      return PlayerBar(
+                        name: '${repo.name} (You)',
+                        flag: repo.flagEmoji,
+                        rating: repo.rating,
+                        clockText: formatClock(clock.ms),
+                        active: clock.active,
+                        showClock: setup.timed,
+                        firstMove: clock.firstMove,
                       );
                     },
                   ),
-                ),
+                  Expanded(
+                    child: Selector<GameController, _InfoView>(
+                      selector: (_, c) => _InfoView.from(c),
+                      builder: (_, v, __) => _infoPanel(context, v),
+                    ),
+                  ),
+                  if (AdsService.showBannerPlaceholder)
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.black45,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.white12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.movie_filter,
+                              size: 14, color: AppColors.textDim),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Ad banner placeholder (google_mobile_ads)',
+                            style: AppTheme.dim12,
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
               ),
-              // Player bar (rebuilds on clock ticks only).
-              Selector<GameController, _ClockView>(
-                selector: (_, c) => _ClockView(
-                  setup.playerIsWhite ? c.whiteMs : c.blackMs,
-                  !c.isGameOver &&
-                      c.game.whiteToMove == setup.playerIsWhite,
-                ),
-                builder: (_, clock, __) {
-                  final repo = context.watch<ArenaRepository>();
-                  return PlayerBar(
-                    name: '${repo.name} (You)',
-                    flag: repo.flagEmoji,
-                    rating: repo.rating,
-                    clockText: formatClock(clock.ms),
-                    active: clock.active,
+              // No-show abort countdown overlay (video parity).
+              Selector<GameController, int?>(
+                selector: (_, c) => c.idleAbortRemaining,
+                builder: (_, remain, __) {
+                  if (remain == null) return const SizedBox.shrink();
+                  return Positioned.fill(
+                    child: Container(
+                      color: Colors.black.withOpacity(0.6),
+                      child: Center(
+                        child: Container(
+                          margin: const EdgeInsets.symmetric(horizontal: 40),
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF39607E),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text(
+                                'Waiting for opponent',
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.w800),
+                              ),
+                              const SizedBox(height: 12),
+                              const CircularProgressIndicator(
+                                  color: Colors.white),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Aborting game in $remain..',
+                                style: const TextStyle(
+                                    fontSize: 13, fontWeight: FontWeight.w700),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   );
                 },
               ),
-              Expanded(
-                child: Selector<GameController, _InfoView>(
-                  selector: (_, c) => _InfoView.from(c),
-                  builder: (_, v, __) => _infoPanel(context, v),
-                ),
-              ),
-              if (AdsService.showBannerPlaceholder)
-                Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.all(8),
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.black45,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.white12),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.movie_filter,
-                          size: 14, color: AppColors.textDim),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Ad banner placeholder (google_mobile_ads)',
-                        style: AppTheme.dim12,
-                      ),
-                    ],
-                  ),
-                ),
             ],
           ),
         ),
@@ -354,33 +461,37 @@ class _GameBodyState extends State<_GameBody> {
           ),
           const Spacer(),
           if (showChat)
-            IconButton(
-              icon: const Icon(Icons.chat_bubble, color: Colors.white),
-              onPressed: () => showArenaSnack(
-                  context, 'Chat arrives with the online update'),
+            Stack(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.chat_bubble, color: Colors.white),
+                  onPressed: () => showChatSheet(context),
+                ),
+                if (v.unread > 0)
+                  Positioned(
+                    right: 6,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: AppColors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text('${v.unread}',
+                          style: const TextStyle(fontSize: 9)),
+                    ),
+                  ),
+              ],
             ),
           IconButton(
             icon: const Icon(Icons.undo, color: Colors.white),
             tooltip: 'Takeback',
-            onPressed: v.thinking || v.over ? null : c.takeback,
+            onPressed: v.canTakeback ? c.takeback : null,
           ),
           IconButton(
-            icon: const Icon(Icons.handshake, color: Colors.white),
-            tooltip: 'Offer draw',
-            onPressed: v.thinking || v.over
-                ? null
-                : () async {
-                    final r = await c.offerDraw();
-                    if (r == 'declined' && context.mounted) {
-                      showArenaSnack(
-                          context, 'Draw declined — keep fighting!');
-                    }
-                  },
-          ),
-          IconButton(
-            icon: const Icon(Icons.flag, color: Colors.white),
-            tooltip: 'Resign',
-            onPressed: v.over ? null : () => _confirmResign(context, c),
+            icon: const Icon(Icons.menu, color: Colors.white),
+            tooltip: 'Game menu',
+            onPressed: v.over ? null : () => _openMenu(context, c),
           ),
           IconButton(
             icon: const Icon(Icons.settings, color: Colors.white),
@@ -389,6 +500,26 @@ class _GameBodyState extends State<_GameBody> {
         ],
       ),
     );
+  }
+
+  Future<void> _openMenu(BuildContext context, GameController c) async {
+    final muted = !context.read<SettingsController>().sound;
+    final action = await showGameMenuSheet(context, muted: muted);
+    if (action == null || !context.mounted) return;
+    switch (action) {
+      case 'mute':
+        final s = context.read<SettingsController>();
+        await s.set('sound', !s.sound);
+      case 'draw':
+        final r = await c.offerDraw();
+        if (r == 'declined' && context.mounted) {
+          showArenaSnack(context, 'Draw declined — keep fighting!');
+        }
+      case 'friend':
+        showArenaSnack(context, 'Friend request sent ✔');
+      case 'resign':
+        await _confirmResign(context, c);
+    }
   }
 
   Widget _infoPanel(BuildContext context, _InfoView v) {
@@ -489,24 +620,15 @@ class _GameBodyState extends State<_GameBody> {
 
   Future<void> _confirmResign(
       BuildContext context, GameController c) async {
-    final played = c.playerHasMoved;
-    final yes = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Resign game?'),
-        content: Text(played
-            ? 'This counts as a loss.'
-            : 'No moves played — game will be aborted (not rated).'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Keep playing')),
-          TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text(played ? 'Resign' : 'Abort',
-                  style: const TextStyle(color: AppColors.red))),
-        ],
-      ),
+    final played = c.playerHasMoved || c.cpuHasMoved;
+    final yes = await showVideoConfirm(
+      context,
+      title: 'Resign Game',
+      subtitle: played
+          ? 'If you quit, it will count as a loss'
+          : 'No moves played — game will be aborted (not rated)',
+      actionLabel: played ? 'Resign' : 'Abort',
+      cancelLabel: 'Cancel',
     );
     if (yes == true) await c.resign();
   }
@@ -517,24 +639,15 @@ class _GameBodyState extends State<_GameBody> {
       Navigator.of(context).pop();
       return;
     }
-    final played = c.playerHasMoved;
-    final yes = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Leave game?'),
-        content: Text(played
-            ? 'Leaving counts as a loss.'
-            : 'No moves played — game will be aborted (not rated).'),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Stay')),
-          TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text(played ? 'Leave' : 'Abort',
-                  style: const TextStyle(color: AppColors.red))),
-        ],
-      ),
+    final played = c.playerHasMoved || c.cpuHasMoved;
+    final yes = await showVideoConfirm(
+      context,
+      title: 'Leave game?',
+      subtitle: played
+          ? 'Leaving now counts as a loss'
+          : 'No moves played — game will be aborted (not rated)',
+      actionLabel: played ? 'Leave' : 'Abort',
+      cancelLabel: 'Stay',
     );
     if (yes == true) {
       await c.resign();

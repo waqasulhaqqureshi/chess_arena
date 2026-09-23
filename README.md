@@ -85,3 +85,11 @@ Docs: [ARCHITECTURE](docs/ARCHITECTURE.md) · [CPU_ENGINE](docs/CPU_ENGINE.md) �
 - **CPU safety**: repetition-aware search (no sleepy threefolds while
   winning), clock-scaled think budgets (never self-flags in Bullet),
   unrated aborts when resigning before your first move, and draw offers.
+- **v3 (video parity round 2)**: casual CPU games are untimed; human-like
+  CPU pacing; CPU offers draws in dead-drawn endgames; endgame king-squeeze
+  eval (real mating urgency); 2-takeback cap in rated games; simulated
+  opponent chat with unread badge; live-game snapshots → resume after app
+  restart; 20 s no-show abort countdown; hamburger game menu (mute/draw/
+  friend/resign); video-style confirm dialogs; rich game-over sheet with
+  animated rating count; chat bottom sheet; puzzle thumbnails; 3 board
+  themes; rebuilt Profile tab (Customize/Rules/Remove-Ads); 3D home tiles.

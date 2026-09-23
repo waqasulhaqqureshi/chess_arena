@@ -238,6 +238,24 @@ class ArenaRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> rename(String n) async {
+    name = n.trim().isEmpty ? name : n.trim();
+    await Database.setProfile('name', name);
+    notifyListeners();
+    _syncProfile();
+  }
+
+  // ---- live-game snapshot (resume after app restart) ----
+
+  void saveLiveGame(String json) => Database.setProfile('liveGame', json);
+
+  String? get liveGameJson {
+    final v = Database.profile('liveGame', '');
+    return v.isEmpty ? null : v;
+  }
+
+  void clearLiveGame() => Database.setProfile('liveGame', '');
+
   // ---- rankings (remote first, seeded offline fallback) ----
 
   Future<List<RankingEntry>> rankings() async {
@@ -319,12 +337,18 @@ class SettingsController extends ChangeNotifier {
   bool get confirmMoves => Database.setting('confirmMoves', false);
   bool get autoQueen => Database.setting('autoQueen', true);
   bool get showChat => Database.setting('showChat', true);
+  int get boardTheme => Database.setting('boardTheme', 0);
 
   Future<void> set(String key, bool value) async {
     await Database.setSetting(key, value);
     if (key == 'sound') {
       SoundService.configure(enabled: value);
     }
+    notifyListeners();
+  }
+
+  Future<void> setInt(String key, int value) async {
+    await Database.setSetting(key, value);
     notifyListeners();
   }
 }

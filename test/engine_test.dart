@@ -6,9 +6,11 @@
 library;
 
 import 'package:chess_arena/core/utils/elo.dart';
+import 'package:chess_arena/data/time_controls.dart';
 import 'package:chess_arena/engine/chess_ai.dart';
 import 'package:chess_arena/engine/chess_rules.dart';
 import 'package:chess_arena/engine/puzzles.dart';
+import 'package:chess_arena/game/game_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 ChessMove _uci(ChessGame g, String uci) {
@@ -174,6 +176,33 @@ void main() {
       final m = ChessMove((r['from']! as num).toInt(),
           (r['to']! as num).toInt(), (r['promotion']! as num).toInt());
       expect(g.playMove(m), isNotNull);
+    });
+    test('endgame squeeze: lone king on the edge scores better for winner',
+        () {
+      // KQ vs K, black king centered vs cornered (same white material).
+      final center =
+          evaluate(ChessGame.fromFen('8/8/8/3k4/8/8/8/QK6 w - - 0 1'));
+      final corner =
+          evaluate(ChessGame.fromFen('k7/8/8/8/8/8/8/QK6 w - - 0 1'));
+      expect(corner, greaterThan(center));
+    });
+    test('setup snapshot round-trips (live-game resume)', () {
+      final s = GameSetup(
+        rated: true,
+        timed: false,
+        opponentName: 'CPU (Hard)',
+        opponentFlag: 'cpu',
+        opponentRating: 1600,
+        difficulty: CpuDifficulty.hard,
+        playerIsWhite: false,
+        timeControl: timeControlById('blitz53'),
+      );
+      final back = GameSetup.fromJson(s.toJson());
+      expect(back.timed, isFalse);
+      expect(back.rated, isTrue);
+      expect(back.difficulty.depth, 3);
+      expect(back.timeControl.id, s.timeControl.id);
+      expect(back.playerIsWhite, isFalse);
     });
   });
 }
