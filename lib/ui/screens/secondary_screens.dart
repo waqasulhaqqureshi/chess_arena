@@ -16,7 +16,6 @@ import '../../data/repository/arena_repository.dart';
 import '../../services/sound_service.dart';
 import '../dialogs/app_dialogs.dart';
 import '../widgets/app_widgets.dart';
-import '../widgets/piece_widget.dart';
 
 // ---------------------------------------------------------------- friends
 
@@ -445,9 +444,9 @@ class HighlightsScreen extends StatelessWidget {
       body: ArenaBackground(
         child: ListView(
           padding: const EdgeInsets.all(12),
-          children: const [
+          children: [
             _HighlightCard(
-              thumb: const BlackKnight(size: 30),
+              thumb: BlackKnight(size: 30),
               title: 'Brilliant knight sacrifice',
               subtitle: 'GM Carlsen · 2h ago · 12K views',
             ),

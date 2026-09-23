@@ -68,15 +68,21 @@ class StockfishService {
   }
 
   /// Queued UCI best-move query. Returns UCI string or null (caller
-  /// falls back to the Arena brain).
+  /// falls back to the Arena brain). Queries run one at a time.
   Future<String?> bestMoveUci(
     String fen, {
     required int skillLevel,
     required int movetimeMs,
-  }) {
-    final job = _queue.then(() => _search(fen, skillLevel, movetimeMs));
-    _queue = job.then((_) {}, onError: (_) {});
-    return job;
+  }) async {
+    final prev = _queue;
+    final done = Completer<void>();
+    _queue = done.future;
+    await prev;
+    try {
+      return await _search(fen, skillLevel, movetimeMs);
+    } finally {
+      done.complete();
+    }
   }
 
   Future<String?> _search(String fen, int skill, int movetimeMs) async {
