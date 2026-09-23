@@ -1,45 +1,49 @@
-/// Chess piece renderer (Wikimedia-style vectors via
-/// `chess_vectors_flutter`) + circular avatars.
+/// Chess piece renderer + circular avatars.
+///
+/// Pieces render from the MIT `chess_interface` package's fillable PNG set
+/// (`modern_minimalist`), tinted via [BlendMode.srcIn] color filter — the same
+/// image is recolored white or black, exactly like the classic
+/// "white sprite + filter" trick. Falls back to `chess_vectors_flutter`
+/// vectors if the package asset is ever unavailable.
 library;
 
 import 'package:chess_vectors_flutter/chess_vectors_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:random_avatar/random_avatar.dart';
 
-/// Real vector chess piece. [piece] is the signed type from the engine
+import '../../core/theme/app_theme.dart';
+
+const Map<int, String> _pieceFiles = {
+  1: 'pawn',
+  2: 'knight',
+  3: 'bishop',
+  4: 'rook',
+  5: 'queen',
+  6: 'king',
+};
+
+/// Real chess piece image. [piece] is the signed type from the engine
 /// (+ = white, - = black, 0 = empty).
 class PieceWidget extends StatelessWidget {
   final int piece;
   final double size;
 
-  const PieceWidget({super.key, required this.piece, required this.size});
+  /// False → classic vector set instead of PNG images.
+  final bool useImages;
+
+  const PieceWidget({
+    super.key,
+    required this.piece,
+    required this.size,
+    this.useImages = true,
+  });
 
   @override
   Widget build(BuildContext context) {
     if (piece == 0) return const SizedBox.shrink();
     final white = piece > 0;
-    final Widget w;
-    switch (piece.abs()) {
-      case 6:
-        w = white ? WhiteKing(size: size) : BlackKing(size: size);
-        break;
-      case 5:
-        w = white ? WhiteQueen(size: size) : BlackQueen(size: size);
-        break;
-      case 4:
-        w = white ? WhiteRook(size: size) : BlackRook(size: size);
-        break;
-      case 3:
-        w = white ? WhiteBishop(size: size) : BlackBishop(size: size);
-        break;
-      case 2:
-        w = white ? WhiteKnight(size: size) : BlackKnight(size: size);
-        break;
-      case 1:
-      default:
-        w = white ? WhitePawn(size: size) : BlackPawn(size: size);
-        break;
-    }
-    // Soft drop shadow for depth on the wooden board.
+    if (!useImages) return _vector(white);
+    final file = _pieceFiles[piece.abs()] ?? 'pawn';
     return Container(
       width: size,
       height: size,
@@ -52,13 +56,41 @@ class PieceWidget extends StatelessWidget {
           ),
         ],
       ),
-      child: w,
+      child: Image.asset(
+        'packages/chess_interface/assets/modern_minimalist/$file.png',
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        // The bundled sprite is a single-color fill; the color filter
+        // turns it into a white or a black piece.
+        color: white ? AppColors.whitePiece : AppColors.blackPiece,
+        colorBlendMode: BlendMode.srcIn,
+        errorBuilder: (_, __, ___) => _vector(white),
+      ),
     );
+  }
+
+  Widget _vector(bool white) {
+    switch (piece.abs()) {
+      case 6:
+        return white ? WhiteKing(size: size) : BlackKing(size: size);
+      case 5:
+        return white ? WhiteQueen(size: size) : BlackQueen(size: size);
+      case 4:
+        return white ? WhiteRook(size: size) : BlackRook(size: size);
+      case 3:
+        return white ? WhiteBishop(size: size) : BlackBishop(size: size);
+      case 2:
+        return white ? WhiteKnight(size: size) : BlackKnight(size: size);
+      case 1:
+      default:
+        return white ? WhitePawn(size: size) : BlackPawn(size: size);
+    }
   }
 }
 
-/// Circular avatar with initial + flag badge (matches video header style).
-/// CPU opponents get a robot glyph instead of initials.
+/// Circular Multiavatar identicon (deterministic per name) + flag badge.
+/// CPU opponents get a robot glyph instead.
 class AvatarWidget extends StatelessWidget {
   final String name;
   final String flag; // emoji flag or 'cpu'
@@ -74,26 +106,27 @@ class AvatarWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isCpu = flag == 'cpu';
-    final hue = (name.hashCode % 360).abs().toDouble();
+    final d = radius * 2;
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        CircleAvatar(
-          radius: radius,
-          backgroundColor: isCpu
-              ? const Color(0xFF3A3A3A)
-              : HSLColor.fromAHSL(1, hue, 0.55, 0.45).toColor(),
-          child: isCpu
-              ? Icon(Icons.smart_toy,
-                  size: radius * 1.1, color: Colors.white)
-              : Text(
-                  _initials(name),
-                  style: TextStyle(
-                    fontSize: radius * 0.85,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
+        ClipOval(
+          child: SizedBox(
+            width: d,
+            height: d,
+            child: isCpu
+                ? Container(
+                    color: const Color(0xFF3A3A3A),
+                    child: Icon(Icons.smart_toy,
+                        size: radius * 1.1, color: Colors.white),
+                  )
+                : RandomAvatar(
+                    name,
+                    trBackground: true,
+                    width: d,
+                    height: d,
                   ),
-                ),
+          ),
         ),
         if (!isCpu)
           Positioned(
@@ -103,14 +136,5 @@ class AvatarWidget extends StatelessWidget {
           ),
       ],
     );
-  }
-
-  String _initials(String n) {
-    final clean = n.replaceAll(RegExp(r'[^A-Za-z0-9]'), '');
-    if (clean.isEmpty) return '?';
-    if (clean.toLowerCase().startsWith('guest') && clean.length > 5) {
-      return clean.substring(5, clean.length >= 7 ? 7 : clean.length);
-    }
-    return clean.substring(0, clean.length >= 2 ? 2 : 1).toUpperCase();
   }
 }

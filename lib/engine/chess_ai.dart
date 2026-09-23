@@ -202,11 +202,11 @@ class CpuDifficulty {
   /// ELO range ~400..2100 maps to depth 1..3 + blunder/noise scaling.
   factory CpuDifficulty.forElo(int elo) {
     final e = elo.clamp(400, 2100);
-    final depth = e < 700 ? 1 : (e < 1250 ? 2 : 3);
+    final depth = e < 700 ? 1 : (e < 1250 ? 2 : (e < 1800 ? 3 : 4));
     final blunder = ((1350 - e) / 2200).clamp(0.0, 0.30);
     final noise = ((1500 - e) / 7).clamp(0.0, 150.0).round();
     final q = e < 700 ? 2 : (e < 1250 ? 4 : 6);
-    final budget = e < 700 ? 250 : (e < 1250 ? 600 : 1400);
+    final budget = e < 700 ? 250 : (e < 1250 ? 600 : (e < 1800 ? 1400 : 2200));
     final name = e < 700
         ? 'Easy'
         : (e < 1000 ? 'Medium' : (e < 1500 ? 'Hard' : 'Expert'));
@@ -366,11 +366,59 @@ class _Searcher {
     return kept.isEmpty ? moves : kept;
   }
 
+  // ------------------------------------------------------- opening book
+  //
+  // Small embedded book (uci sequences) — the sandbox-safe alternative to
+  // shipping native Stockfish binaries: instant, correct opening play at
+  // Medium+ while the search stays in charge afterwards.
+
+  static String _sq(int s) =>
+      String.fromCharCode(97 + fileOf(s)) + '${rankOf(s) + 1}';
+
+  static String uciOf(ChessMove m) => '${_sq(m.from)}${_sq(m.to)}';
+
+  static const Map<String, List<String>> _book = {
+    '': ['e2e4', 'd2d4', 'g1f3'],
+    'e2e4': ['e7e5', 'c7c5', 'e7e6'],
+    'd2d4': ['d7d5', 'g8f6'],
+    'e2e4 e7e5': ['g1f3', 'b1c3', 'f1c4'],
+    'e2e4 e7e5 g1f3': ['b8c6', 'g8f6'],
+    'e2e4 c7c5': ['g1f3', 'b1c3'],
+    'd2d4 d7d5': ['c2c4', 'g1f3'],
+    'd2d4 g8f6': ['c2c4', 'g1f3'],
+  };
+
+  ChessMove? _bookMove(ChessGame g, List<ChessMove> moves) {
+    if (diff.targetElo < 1000 || g.moveHistory.length >= 6) return null;
+    if (rng.nextDouble() > 0.75) return null; // stay unpredictable
+    final seq = g.moveHistory.map(_Searcher.uciOf).join(' ');
+    final opts = _book[seq];
+    if (opts == null) return null;
+    for (final u in opts) {
+      for (final m in moves) {
+        if (_Searcher.uciOf(m) == u) return m;
+      }
+    }
+    return null;
+  }
+
   /// Returns [from, to, promotion, scoreCp(side-to-move), depth, nodes].
   Map<String, Object?> thinkRoot(ChessGame g) {
     sw.start();
     g.trackSearchKeys = true;
     var moves = g.legalMoves();
+    final book = _bookMove(g, moves);
+    if (book != null) {
+      return {
+        'from': book.from,
+        'to': book.to,
+        'promotion': book.promotion,
+        'score': 0,
+        'depth': 0,
+        'nodes': nodes,
+        'book': true,
+      };
+    }
     moves = _avoidInstantRepeat(g, moves);
     if (moves.isEmpty) {
       return {'none': true, 'nodes': nodes};
@@ -401,26 +449,36 @@ class _Searcher {
         'blunder': true,
       };
     }
+    // Iterative deepening: each completed depth overwrites the previous,
+    // so a timeout still yields the best fully-searched ply (this is what
+    // makes depth-4 Expert safe inside the time budget).
     var best = moves.first;
     var bestScore = -_infinity;
-    var alpha = -_infinity;
-    try {
-      for (final m in moves) {
-        final t = g.doSearchMove(m);
-        var s = -_search(g, diff.depth - 1, -_infinity, -alpha, 1);
-        g.undoSearchMove(t);
-        // Variety noise (also models inaccuracy at low ELO).
-        if (diff.noiseCp > 0) {
-          s += rng.nextInt(diff.noiseCp * 2 + 1) - diff.noiseCp;
+    for (var depth = 1; depth <= diff.depth; depth++) {
+      final last = depth == diff.depth;
+      var alpha = -_infinity;
+      var lb = moves.first;
+      var lbScore = -_infinity;
+      try {
+        for (final m in moves) {
+          final t = g.doSearchMove(m);
+          var s = -_search(g, depth - 1, -_infinity, -alpha, 1);
+          g.undoSearchMove(t);
+          // Variety noise (also models inaccuracy at low ELO).
+          if (last && diff.noiseCp > 0) {
+            s += rng.nextInt(diff.noiseCp * 2 + 1) - diff.noiseCp;
+          }
+          if (s > lbScore) {
+            lbScore = s;
+            lb = m;
+          }
+          if (s > alpha) alpha = s;
         }
-        if (s > bestScore) {
-          bestScore = s;
-          best = m;
-        }
-        if (s > alpha) alpha = s;
+      } on _Timeout {
+        break; // keep the last fully completed depth
       }
-    } on _Timeout {
-      // Keep best-so-far on timeout.
+      best = lb;
+      bestScore = lbScore;
     }
     return {
       'from': best.from,

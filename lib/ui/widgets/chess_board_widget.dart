@@ -23,6 +23,7 @@ class ChessBoardWidget extends StatelessWidget {
   final bool animate;
   final int animKey; // bump to animate the last-moved piece
   final BoardTheme theme;
+  final bool pieceImages;
   final void Function(int sq) onTap;
 
   const ChessBoardWidget({
@@ -42,6 +43,7 @@ class ChessBoardWidget extends StatelessWidget {
     this.animate = true,
     this.animKey = 0,
     this.theme = BoardTheme.brown,
+    this.pieceImages = true,
   });
 
   @override
@@ -174,6 +176,7 @@ class ChessBoardWidget extends StatelessWidget {
                                 : 'p$piece-$sq'),
                         piece: piece,
                         size: sqSize * 0.78,
+                        useImages: pieceImages,
                       ),
               ),
             ),

@@ -200,6 +200,8 @@ class _PuzzleBody extends StatelessWidget {
                     .watch<SettingsController>()
                     .boardTheme
                     .clamp(0, BoardTheme.all.length - 1)],
+                pieceImages:
+                    context.watch<SettingsController>().pieceImages,
               ),
             ),
             Padding(

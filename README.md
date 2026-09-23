@@ -85,6 +85,13 @@ Docs: [ARCHITECTURE](docs/ARCHITECTURE.md) · [CPU_ENGINE](docs/CPU_ENGINE.md) �
 - **CPU safety**: repetition-aware search (no sleepy threefolds while
   winning), clock-scaled think budgets (never self-flags in Bullet),
   unrated aborts when resigning before your first move, and draw offers.
+- **v4 (package hardening)**: piece PNGs from `chess_interface`'s bundled
+  `modern_minimalist` set, recolored white/black via `BlendMode.srcIn` color
+  filter (vector fallback on any asset error); Multiavatar identicons via
+  `random_avatar`; real searchable flag picker via `country_pickers`;
+  embedded opening book + iterative deepening + Expert depth (the
+  sandbox-safe alternative to shipping native Stockfish — see
+  `docs/CPU_ENGINE.md`).
 - **v3 (video parity round 2)**: casual CPU games are untimed; human-like
   CPU pacing; CPU offers draws in dead-drawn endgames; endgame king-squeeze
   eval (real mating urgency); 2-takeback cap in rated games; simulated

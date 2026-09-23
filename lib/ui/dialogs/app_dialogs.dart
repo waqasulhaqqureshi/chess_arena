@@ -2,6 +2,8 @@
 /// Promotion picker, Game Over, in-game menu, chat, customize, rules.
 library;
 
+import 'package:country_pickers/country.dart';
+import 'package:country_pickers/country_pickers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
@@ -644,6 +646,8 @@ class _SettingsDialog extends StatelessWidget {
                 s.autoQueen, 'autoQueen'),
             _toggle(context, s, Icons.chat_bubble_outline, 'Show chat',
                 s.showChat, 'showChat'),
+            _toggle(context, s, Icons.image, 'Piece images (PNG set)',
+                s.pieceImages, 'pieceImages'),
             const SizedBox(height: 10),
             const Align(
               alignment: Alignment.centerLeft,
@@ -876,7 +880,7 @@ class _CustomizeSheetState extends State<_CustomizeSheet> {
                 AvatarWidget(name: repo.name, flag: repo.flagEmoji, radius: 26),
                 const SizedBox(width: 12),
                 GestureDetector(
-                  onTap: repo.cycleFlag,
+                  onTap: () => _pickCountry(context, repo),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
                         horizontal: 12, vertical: 8),
@@ -890,6 +894,36 @@ class _CustomizeSheetState extends State<_CustomizeSheet> {
                 ),
               ],
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _pickCountry(BuildContext context, ArenaRepository repo) {
+    const supported = [
+      'US', 'GB', 'IN', 'PK', 'PL', 'DE', 'FR', 'ES',
+      'IT', 'BR', 'RU', 'MX', 'NO', 'MA', 'TR',
+    ];
+    showDialog(
+      context: context,
+      builder: (ctx) => CountryPickerDialog(
+        isSearchable: true,
+        titlePadding: const EdgeInsets.all(8),
+        searchInputDecoration:
+            const InputDecoration(hintText: 'Search country…'),
+        title: const Text('Select your country'),
+        itemFilter: (c) => supported.contains(c.isoCode),
+        priorityList: [
+          CountryPickerUtils.getCountryByIsoCode(repo.flagCode.toUpperCase()),
+        ],
+        onValuePicked: (Country country) =>
+            repo.setFlagCode(country.isoCode),
+        itemBuilder: (Country country) => Row(
+          children: [
+            CountryPickerUtils.getDefaultFlagImage(country),
+            const SizedBox(width: 8),
+            Text(country.name),
           ],
         ),
       ),

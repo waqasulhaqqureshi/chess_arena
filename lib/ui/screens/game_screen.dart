@@ -105,6 +105,7 @@ class _BoardView {
   final bool showLast;
   final bool animate;
   final int themeIdx;
+  final bool pieceImages;
   const _BoardView({
     required this.len,
     required this.sel,
@@ -117,10 +118,11 @@ class _BoardView {
     required this.showLast,
     required this.animate,
     required this.themeIdx,
+    required this.pieceImages,
   });
 
-  factory _BoardView.from(
-      GameController c, bool showLast, bool animate, int themeIdx) {
+  factory _BoardView.from(GameController c, bool showLast, bool animate,
+      int themeIdx, bool pieceImages) {
     return _BoardView(
       len: c.game.moveHistory.length,
       sel: c.selected,
@@ -135,6 +137,7 @@ class _BoardView {
       showLast: showLast,
       animate: animate,
       themeIdx: themeIdx,
+      pieceImages: pieceImages,
     );
   }
 
@@ -151,11 +154,12 @@ class _BoardView {
       pendT == o.pendT &&
       showLast == o.showLast &&
       animate == o.animate &&
-      themeIdx == o.themeIdx;
+      themeIdx == o.themeIdx &&
+      pieceImages == o.pieceImages;
 
   @override
   int get hashCode => Object.hash(len, sel, targets, lastFrom, lastTo, check,
-      pendF, pendT, showLast, themeIdx);
+      pendF, pendT, showLast, themeIdx, pieceImages);
 }
 
 class _InfoView {
@@ -323,8 +327,9 @@ class _GameBodyState extends State<_GameBody> {
                     child: RepaintBoundary(
                       child: Selector2<GameController, SettingsController,
                           _BoardView>(
-                        selector: (_, c, s) => _BoardView.from(
-                            c, s.showLastMove, s.pieceAnimation, s.boardTheme),
+                        selector: (_, c, s) => _BoardView.from(c,
+                            s.showLastMove, s.pieceAnimation, s.boardTheme,
+                            s.pieceImages),
                         builder: (_, v, __) {
                           final c = context.read<GameController>();
                           return ChessBoardWidget(
@@ -342,6 +347,7 @@ class _GameBodyState extends State<_GameBody> {
                             animKey: v.len,
                             theme: BoardTheme.all[
                                 v.themeIdx.clamp(0, BoardTheme.all.length - 1)],
+                            pieceImages: v.pieceImages,
                           );
                         },
                       ),

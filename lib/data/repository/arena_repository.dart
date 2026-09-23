@@ -98,6 +98,12 @@ class ArenaRepository extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> setFlagCode(String code) async {
+    flagCode = code.toLowerCase();
+    await Database.setProfile('flagCode', flagCode);
+    notifyListeners();
+  }
+
   Future<void> setTimeControls(List<String> ids) async {
     timeControls = ids.isEmpty ? ['blitz53'] : ids;
     await Database.setProfile('timeControls', timeControls);
@@ -338,6 +344,7 @@ class SettingsController extends ChangeNotifier {
   bool get autoQueen => Database.setting('autoQueen', true);
   bool get showChat => Database.setting('showChat', true);
   int get boardTheme => Database.setting('boardTheme', 0);
+  bool get pieceImages => Database.setting('pieceImages', true);
 
   Future<void> set(String key, bool value) async {
     await Database.setSetting(key, value);

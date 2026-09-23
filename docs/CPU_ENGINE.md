@@ -57,6 +57,31 @@ scale with your rating: depth 1 → 2 → 3, blunder 30% → 0%, noise ±150 →
 - **CPU draw offers (v3)**: after move 30 in rated games, |eval| < 15 cp
   triggers a once-per-game draw offer (chat line + accept/decline dialog).
 
+## Stockfish decision (v4)
+
+The `stockfish` pub plugin ships **native engine binaries per platform**
+(.so/.dylib + FFI) that can only be validated on real devices, so it is
+deliberately **not** a dependency. The "else way" chosen instead:
+
+1. **Embedded opening book** (`_book` in `chess_ai.dart`): instant,
+   correct opening moves at ≥1000 ELO for the first ~3 moves each side.
+2. **Iterative deepening**: the root search now completes depth 1..N and
+   keeps the last finished depth on timeout — safe at any budget.
+3. **Expert tier**: `CpuDifficulty.forElo(≥1800)` → depth 4, 2.2 s budget.
+
+If real Stockfish is wanted later: add the plugin, bundle the binaries in
+`android/app/src/main/jniLibs/*` + iOS frameworks, and swap
+`CpuBrain.think` for the UCI query behind the same interface.
+
+## v4 upgrades
+
+- **Piece images**: `PieceWidget` renders the MIT `chess_interface`
+  package's fillable `modern_minimalist` PNGs and tints them white/black with
+  `ColorFilter`/`BlendMode.srcIn` (white sprite + filter = black piece).
+  `errorBuilder` falls back to `chess_vectors_flutter`.
+- **Avatars**: `random_avatar` Multiavatar identicons (offline, seeded by
+  player name); flags picked with `country_pickers`.
+
 ## Threading (`cpu_brain.dart`)
 
 `CpuBrain.think` runs `cpuThinkEntry` via `compute()` (FEN + difficulty JSON

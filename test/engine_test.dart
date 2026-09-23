@@ -186,6 +186,19 @@ void main() {
           evaluate(ChessGame.fromFen('k7/8/8/8/8/8/8/QK6 w - - 0 1'));
       expect(corner, greaterThan(center));
     });
+    test('opening book plays sensible first moves (Expert path)', () {
+      final g = ChessGame.startingPosition();
+      final d = CpuDifficulty.forElo(1900);
+      expect(d.depth, 4); // Expert tier exists (stockfish alternative)
+      for (var i = 0; i < 4; i++) {
+        final r = thinkSync(g.toFen(), d, seed: 7);
+        final m = ChessMove((r['from']! as num).toInt(),
+            (r['to']! as num).toInt(), (r['promotion']! as num).toInt());
+        expect(g.playMove(m), isNotNull);
+      }
+      // Book or not, every reply must be legal and developing-ish.
+      expect(g.moveHistory.length, 4);
+    });
     test('setup snapshot round-trips (live-game resume)', () {
       final s = GameSetup(
         rated: true,
