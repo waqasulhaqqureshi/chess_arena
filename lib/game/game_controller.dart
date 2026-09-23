@@ -15,6 +15,7 @@ import '../engine/chess_rules.dart';
 import '../engine/cpu_brain.dart';
 import '../engine/stockfish_service.dart';
 import '../services/ads_service.dart';
+import '../services/chat_brain.dart';
 import '../services/sound_service.dart';
 
 String formatClock(double ms) {
@@ -146,6 +147,7 @@ class GameController extends ChangeNotifier {
   final Random _rng = Random();
   final Stopwatch _live = Stopwatch();
   final List<List<int>> _moveLog = [];
+  final ChatBrain _brain = ChatBrain();
 
   GameController({
     required this.repo,
@@ -199,10 +201,8 @@ class GameController extends ChangeNotifier {
     _live.start();
     if (setup.timed) _startClock();
     if (saveSnapshot) _saveLive();
-    // Opponent says hello (rated games feel alive).
-    if (setup.rated) {
-      _scheduleOppChat('glhf 🙂', 2200);
-    }
+    // Opponent says hello (dependency-backed ELIZA greeting).
+    _scheduleOppChat(_brain.greeting(), 2200);
   }
 
   bool get isPlayerTurn =>
@@ -604,26 +604,28 @@ class GameController extends ChangeNotifier {
     });
   }
 
-  /// Player quick-reply; the opponent answers in character.
+  /// Player quick-reply; the opponent answers in character — chess-context
+  /// lines use word-boundary triggers, everything else goes to the ELIZA
+  /// brain so conversations never feel canned.
   void sendChat(String text) {
     chat.add(ChatMsg(mine: true, text: text));
     notifyListeners();
-    final lower = text.toLowerCase();
+    final t = text.toLowerCase();
     String? reply;
-    if (lower.contains('hi') || lower.contains('hello') || lower == 'gl') {
-      reply = 'hey! good luck 🙂';
-    } else if (lower.contains('nice')) {
-      reply = 'thanks, you too!';
-    } else if (lower.contains('gg')) {
-      reply = 'gg wp!';
-    } else if (lower.contains('draw')) {
+    if (RegExp(r'\b(gl|hf|good luck)\b').hasMatch(t)) {
+      reply = 'good luck, have fun 🙂';
+    } else if (RegExp(r'\b(gg|wp|well played)\b').hasMatch(t)) {
+      reply = _brain.farewell();
+    } else if (RegExp(r'\bdraw\b').hasMatch(t)) {
       reply = 'let’s play on for now 😄';
-    } else if (lower.contains('thank')) {
-      reply = 'anytime!';
+    } else if (RegExp(r'\b(nice|great|wow|good move)\b').hasMatch(t)) {
+      reply = 'thanks! you too!';
+    } else if (RegExp(r'\b(hi|hello|hey)\b').hasMatch(t)) {
+      reply = _brain.greeting();
+    } else {
+      reply = _brain.reply(text) ?? 'interesting! your move 😄';
     }
-    if (reply != null) {
-      _scheduleOppChat(reply, 1200 + _rng.nextInt(1600));
-    }
+    _scheduleOppChat(reply, 1200 + _rng.nextInt(1600));
   }
 
   // ------------------------------------------------------------------ end
@@ -738,7 +740,7 @@ class GameController extends ChangeNotifier {
     } else {
       SoundService.gameEnd();
     }
-    _scheduleOppChat('gg wp!', 900);
+    _scheduleOppChat(_brain.farewell(), 900);
     var delta = 0;
     var earned = 0;
     if (!abort && setup.rated) {

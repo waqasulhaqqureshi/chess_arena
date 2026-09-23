@@ -85,6 +85,11 @@ Docs: [ARCHITECTURE](docs/ARCHITECTURE.md) · [CPU_ENGINE](docs/CPU_ENGINE.md) �
 - **CPU safety**: repetition-aware search (no sleepy threefolds while
   winning), clock-scaled think budgets (never self-flags in Bullet),
   unrated aborts when resigning before your first move, and draw offers.
+- **v7 (dependency-driven identity + chat)**: opponent names now generated
+  by `random_name_generator` (75% female, localized per zone with
+  culture-matched flags) — no static pools; bot chat runs on the offline
+  ELIZA engine from `eliza_chat` (greetings, free-form replies, farewells)
+  with chess-context triggers on word boundaries.
 - **v6 (launch backbone)**: Find Opponent is online-first (Supabase
   channel) with an instant simulated-human fallback — realistic random
   names, `country_pickers` flags, `random_avatar` faces, rating ± player
