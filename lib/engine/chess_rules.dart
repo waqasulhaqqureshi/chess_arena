@@ -114,6 +114,8 @@ class ChessGame {
 
   final List<_Snapshot> _history = [];
   final List<_Undo> _searchStack = [];
+  final List<String> _searchKeys = [];
+  bool trackSearchKeys = false;
   Map<String, int> _posCounts = {};
 
   ChessGame();
@@ -623,6 +625,7 @@ class ChessGame {
         (piece.abs() == pawn || captured != 0) ? 0 : halfmove + 1;
     if (!white) fullmove++;
     whiteToMove = !whiteToMove;
+    if (trackSearchKeys) _searchKeys.add(_positionKey());
     final record =
         _Undo(m, captured, prevWk, prevWq, prevBk, prevBq, prevEp, prevHalf);
     _searchStack.add(record);
@@ -665,6 +668,9 @@ class ChessGame {
     bq = u.bq;
     ep = u.ep;
     halfmove = u.half;
+    if (trackSearchKeys && _searchKeys.isNotEmpty) {
+      _searchKeys.removeLast();
+    }
     _searchStack.removeLast();
   }
 
@@ -700,6 +706,7 @@ class ChessGame {
     ));
     _doMove(match);
     _searchStack.clear(); // public moves don't use search stack
+    _searchKeys.clear();
     sanHistory.add(san);
     moveHistory.add(match);
     _posCounts[_positionKey()] = (_posCounts[_positionKey()] ?? 0) + 1;
@@ -870,6 +877,25 @@ class ChessGame {
   void undoSearchMove(Object token) => _undoMove(token as _Undo);
 
   bool get hasInsufficientMaterial => _insufficientMaterial();
+
+  /// Key of the current position (for repetition bookkeeping).
+  String get positionKey => _positionKey();
+
+  /// How often [key] occurred in the real game history.
+  int positionCount(String key) => _posCounts[key] ?? 0;
+
+  /// True when the current position already occurred twice before
+  /// (game history + active search path) — i.e. a drawable repetition.
+  bool searchRepeatsDraw() {
+    final key = _positionKey();
+    var n = _posCounts[key] ?? 0;
+    if (trackSearchKeys) {
+      for (final k in _searchKeys) {
+        if (k == key) n++;
+      }
+    }
+    return n >= 3;
+  }
 
   // -------------------------------------------------------------------------
   // Debug / testing helper

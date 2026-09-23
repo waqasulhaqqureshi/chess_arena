@@ -204,6 +204,16 @@ class CpuDifficulty {
         timeBudgetMs: (j['timeBudgetMs']! as num).toInt(),
         quiescenceDepth: (j['quiescenceDepth']! as num).toInt(),
       );
+
+  CpuDifficulty copyWith({int? timeBudgetMs}) => CpuDifficulty(
+        name: name,
+        targetElo: targetElo,
+        depth: depth,
+        blunderChance: blunderChance,
+        noiseCp: noiseCp,
+        timeBudgetMs: timeBudgetMs ?? this.timeBudgetMs,
+        quiescenceDepth: quiescenceDepth,
+      );
 }
 
 // ---------------------------------------------------------------------------
@@ -258,6 +268,7 @@ class _Searcher {
 
   int _quiescence(ChessGame g, int alpha, int beta, int qdepth) {
     _poll();
+    if (g.searchRepeatsDraw()) return 0;
     final inChk = g.inCheck();
     if (!inChk) {
       final standPat = _scoreFromSideToMove(g);
@@ -285,6 +296,7 @@ class _Searcher {
 
   int _search(ChessGame g, int depth, int alpha, int beta, int ply) {
     _poll();
+    if (g.searchRepeatsDraw()) return 0;
     if (g.halfmove >= 100 || g.hasInsufficientMaterial) return 0;
     if (depth <= 0) return _quiescence(g, alpha, beta, diff.quiescenceDepth);
     final moves = g.legalMoves();
@@ -302,10 +314,28 @@ class _Searcher {
     return alpha;
   }
 
+  /// Drops moves that instantly complete a threefold repetition — unless
+  /// the CPU is losing (then it happily takes the draw).
+  List<ChessMove> _avoidInstantRepeat(ChessGame g, List<ChessMove> moves) {
+    if (moves.length < 2) return moves;
+    final staticScore = g.whiteToMove ? evaluate(g) : -evaluate(g);
+    if (staticScore < -300) return moves; // losing: allow the escape
+    final kept = <ChessMove>[];
+    for (final m in moves) {
+      final t = g.doSearchMove(m);
+      final repeats = g.positionCount(g.positionKey) >= 2;
+      g.undoSearchMove(t);
+      if (!repeats) kept.add(m);
+    }
+    return kept.isEmpty ? moves : kept;
+  }
+
   /// Returns [from, to, promotion, scoreCp(side-to-move), depth, nodes].
   Map<String, Object?> thinkRoot(ChessGame g) {
     sw.start();
-    final moves = g.legalMoves();
+    g.trackSearchKeys = true;
+    var moves = g.legalMoves();
+    moves = _avoidInstantRepeat(g, moves);
     if (moves.isEmpty) {
       return {'none': true, 'nodes': nodes};
     }

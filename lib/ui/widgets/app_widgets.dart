@@ -2,6 +2,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/theme/app_theme.dart';
 
@@ -151,7 +152,7 @@ class CoinChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('🪙', style: TextStyle(fontSize: 16)),
+          SvgPicture.asset('assets/icons/coin.svg', width: 18, height: 18),
           const SizedBox(width: 6),
           Text(
             '$coins',

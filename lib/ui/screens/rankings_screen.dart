@@ -39,9 +39,9 @@ class _RankingsScreenState extends State<RankingsScreen> {
               children: [
                 Text('Rankings', style: AppTheme.title22),
                 const Spacer(),
-                _filterChip('🌍', _world, () => setState(() => _world = true)),
+                _filterChip(const Icon(Icons.public, size: 20, color: Colors.white), _world, () => setState(() => _world = true)),
                 const SizedBox(width: 8),
-                _filterChip(repo.flagEmoji, !_world,
+                _filterChip(Text(repo.flagEmoji, style: const TextStyle(fontSize: 18)), !_world,
                     () => setState(() => _world = false)),
               ],
             ),
@@ -51,7 +51,7 @@ class _RankingsScreenState extends State<RankingsScreen> {
               padding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
               child: Text(
-                'Offline board · live global rankings sync with Supabase ☁️',
+                'Offline board · live global rankings sync with Supabase',
                 style: AppTheme.dim12,
               ),
             ),
@@ -121,8 +121,8 @@ class _RankingsScreenState extends State<RankingsScreen> {
                                 ),
                               ),
                             ),
-                            const Text('📊',
-                                style: TextStyle(fontSize: 14)),
+                            const Icon(Icons.bar_chart,
+                                size: 15, color: AppColors.orange),
                             const SizedBox(width: 6),
                             Text(
                               '${r.rating}',
@@ -144,7 +144,7 @@ class _RankingsScreenState extends State<RankingsScreen> {
     );
   }
 
-  Widget _filterChip(String label, bool sel, VoidCallback onTap) {
+  Widget _filterChip(Widget child, bool sel, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -160,7 +160,7 @@ class _RankingsScreenState extends State<RankingsScreen> {
           color: sel ? null : AppColors.card,
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Text(label, style: const TextStyle(fontSize: 18)),
+        child: child,
       ),
     );
   }

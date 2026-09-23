@@ -71,3 +71,6 @@ Plain Maps only — no codegen adapters.
 - New screens: add to `lib/ui/screens/`, reuse `ArenaCard` / `ArenaButton` /
   `showArenaSnack` from `ui/widgets/app_widgets.dart`.
 - `debugPrint` for service logs; user-facing errors via snackbar, never crash.
+- Hot paths (game screen) use `Selector` snapshots (`_BoardView`,
+  `_ClockView`, `_InfoView`) + `RepaintBoundary` so the clock ticker never
+  rebuilds the board; keep new per-tick widgets out of `watch` subtrees.

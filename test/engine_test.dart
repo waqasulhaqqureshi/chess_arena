@@ -154,4 +154,26 @@ void main() {
       expect(d, greaterThan(25));
     });
   });
+
+  group('draw awareness + budgets (v2)', () {
+    test('repetition API counts occurrences', () {
+      final g = ChessGame.startingPosition();
+      for (var i = 0; i < 2; i++) {
+        for (final u in ['g1f3', 'g8f6', 'f3g1', 'f6g8']) {
+          g.playMove(_uci(g, u));
+        }
+      }
+      expect(g.positionCount(g.positionKey), 3); // start + 2 returns
+      expect(g.searchRepeatsDraw(), isTrue);
+    });
+    test('tiny budget still returns a legal move (timeout path)', () {
+      final g = ChessGame.startingPosition();
+      final d = CpuDifficulty.hard.copyWith(timeBudgetMs: 30);
+      expect(d.timeBudgetMs, 30);
+      final r = thinkSync(g.toFen(), d, seed: 3);
+      final m = ChessMove((r['from']! as num).toInt(),
+          (r['to']! as num).toInt(), (r['promotion']! as num).toInt());
+      expect(g.playMove(m), isNotNull);
+    });
+  });
 }

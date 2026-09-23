@@ -45,10 +45,24 @@ class CpuResult {
 
 class CpuBrain {
   /// Computes the CPU reply for [game]'s side to move.
-  static Future<CpuResult?> think(ChessGame game, CpuDifficulty diff) async {
+  static Future<CpuResult?> think(
+    ChessGame game,
+    CpuDifficulty diff, {
+    double? clockMs,
+    int incrementMs = 0,
+  }) async {
+    var eff = diff;
+    if (clockMs != null) {
+      // Shrink the budget on low time so the CPU can't flag itself.
+      final scaled = min(
+          diff.timeBudgetMs, max(80, (clockMs / 25 + incrementMs).round()));
+      if (scaled < diff.timeBudgetMs) {
+        eff = diff.copyWith(timeBudgetMs: scaled);
+      }
+    }
     final args = <String, Object?>{
       'fen': game.toFen(),
-      'diff': diff.toJson(),
+      'diff': eff.toJson(),
       'seed': Random().nextInt(1 << 30),
     };
     try {
@@ -57,7 +71,7 @@ class CpuBrain {
     } catch (_) {
       // Isolate unavailable (some embedders) — think on the UI thread.
       try {
-        return CpuResult.fromMap(thinkSync(game.toFen(), diff));
+        return CpuResult.fromMap(thinkSync(game.toFen(), eff));
       } catch (_) {
         return null;
       }

@@ -3,6 +3,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
@@ -62,7 +63,7 @@ class HomeScreen extends StatelessWidget {
               ),
               GestureDetector(
                 onTap: () => showArenaSnack(
-                    context, 'Accounts arrive with the online update ☁️'),
+                    context, 'Accounts arrive with the online update'),
                 child: const Row(
                   children: [
                     Icon(Icons.circle, size: 8, color: AppColors.greenBright),
@@ -103,7 +104,8 @@ class HomeScreen extends StatelessWidget {
           const SectionLabel('Today'),
           const SizedBox(height: 8),
           _todayRow(
-            icon: '🥇',
+            icon: Icons.emoji_events,
+            iconColor: AppColors.gold,
             title: 'Daily game',
             subtitle:
                 '${repo.streak} day streak · longer streaks pay more',
@@ -129,8 +131,9 @@ class HomeScreen extends StatelessWidget {
           ),
           const Divider(color: AppColors.divider),
           _todayRow(
-            icon: '🧩',
-            title: 'Daily puzzle 🪙10',
+            icon: Icons.extension,
+            iconColor: const Color(0xFF9B7BF5),
+            title: 'Daily puzzle · +10',
             subtitle: repo.dailyPuzzleDone
                 ? 'Come back tomorrow for another'
                 : 'Solve one puzzle today',
@@ -144,8 +147,9 @@ class HomeScreen extends StatelessWidget {
           ),
           const Divider(color: AppColors.divider),
           _todayRow(
-            icon: '📜',
-            title: 'Next Mission 🪙25',
+            icon: Icons.assignment,
+            iconColor: const Color(0xFF3FA7FF),
+            title: 'Next Mission · +25',
             subtitle: repo.missionClaimed
                 ? 'Play a game online (${repo.missionProgress}/1)'
                 : 'Play a game online (${repo.missionProgress}/1) — ready!',
@@ -154,7 +158,7 @@ class HomeScreen extends StatelessWidget {
                     final ok = await repo.claimMission();
                     if (context.mounted) {
                       showArenaSnack(context,
-                          ok ? '+25 coins! 🎉' : 'Play a rated game first');
+                          ok ? '+25 coins!' : 'Play a rated game first');
                     }
                   })
                 : _smallButton(context, 'Claim ›', null),
@@ -165,14 +169,24 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _todayRow({
-    required String icon,
+    required IconData icon,
+    required Color iconColor,
     required String title,
     required String subtitle,
     required Widget trailing,
   }) {
     return Row(
       children: [
-        Text(icon, style: const TextStyle(fontSize: 30)),
+        Container(
+          width: 44,
+          height: 44,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: iconColor.withOpacity(0.18),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(icon, size: 26, color: iconColor),
+        ),
         const SizedBox(width: 10),
         Expanded(
           child: Column(
@@ -336,15 +350,29 @@ class HomeScreen extends StatelessWidget {
           ArenaButton(
             label: 'Find opponent',
             subtitle: 'Random Opponent',
-            leading: const Text('🐺', style: TextStyle(fontSize: 34)),
+            leading: Container(
+              width: 46,
+              height: 46,
+              decoration: const BoxDecoration(
+                color: Colors.black26,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.person_search,
+                  size: 28, color: Colors.white),
+            ),
             onPressed: () => _findOpponent(context, repo),
           ),
           const SizedBox(height: 8),
-          const Center(
-            child: Text(
-              '👥 Matched with players near your rating',
-              style: TextStyle(fontSize: 12, color: AppColors.textDim),
-            ),
+          const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.group, size: 14, color: AppColors.textDim),
+              SizedBox(width: 6),
+              Text(
+                'Matched with players near your rating',
+                style: TextStyle(fontSize: 12, color: AppColors.textDim),
+              ),
+            ],
           ),
         ],
       ),
@@ -384,7 +412,7 @@ class HomeScreen extends StatelessWidget {
 
   Widget _timeControlIcons(ArenaRepository repo) {
     final icons = repo.timeControls
-        .map((id) => timeControlById(id).icon)
+        .map((id) => timeControlById(id).iconAsset)
         .toList();
     final shown = icons.take(3).toList();
     final extra = icons.length - shown.length;
@@ -397,7 +425,7 @@ class HomeScreen extends StatelessWidget {
                 color: AppColors.cardLight,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Text(e, style: const TextStyle(fontSize: 18)),
+              child: SvgPicture.asset(e, width: 22, height: 22),
             )),
         if (extra > 0)
           Container(
@@ -434,11 +462,11 @@ class HomeScreen extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                  child: _gridCell(context, '🎯', 'Play CPU',
+                  child: _gridCell(context, Icons.computer, AppColors.orange, 'Play CPU',
                       onTap: () => _playCpu(context, repo))),
               Container(width: 1, height: 84, color: AppColors.divider),
               Expanded(
-                  child: _gridCell(context, '🧩', 'Puzzles',
+                  child: _gridCell(context, Icons.extension, const Color(0xFF9B7BF5), 'Puzzles',
                       onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
                               builder: (_) =>
@@ -449,13 +477,13 @@ class HomeScreen extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                  child: _gridCell(context, '👁️', 'Watch',
+                  child: _gridCell(context, Icons.visibility, AppColors.greenBright, 'Watch',
                       onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
                               builder: (_) => const WatchScreen())))),
               Container(width: 1, height: 84, color: AppColors.divider),
               Expanded(
-                  child: _gridCell(context, '🎬', 'Highlights',
+                  child: _gridCell(context, Icons.movie, AppColors.red, 'Highlights',
                       onTap: () => Navigator.of(context).push(
                           MaterialPageRoute(
                               builder: (_) =>
@@ -467,7 +495,8 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _gridCell(BuildContext context, String icon, String label,
+  Widget _gridCell(
+      BuildContext context, IconData icon, Color color, String label,
       {required VoidCallback onTap}) {
     return InkWell(
       onTap: () {
@@ -479,7 +508,16 @@ class HomeScreen extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(icon, style: const TextStyle(fontSize: 30)),
+            Container(
+              width: 46,
+              height: 46,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.16),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, size: 28, color: color),
+            ),
             const SizedBox(width: 10),
             Text(label,
                 style: const TextStyle(

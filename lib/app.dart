@@ -1,6 +1,7 @@
 /// Root app + bottom-tab shell (Play / Friends / Rankings / Profile).
 library;
 
+import 'package:chess_vectors_flutter/chess_vectors_flutter.dart';
 import 'package:flutter/material.dart';
 
 import 'core/theme/app_theme.dart';
@@ -60,13 +61,13 @@ class _RootShellState extends State<RootShell> {
                 const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
             child: Row(
               children: [
-                _item(0, '♞', 'Play'),
+                _item(0, _knightIcon(_tab == 0), 'Play'),
                 _divider(),
-                _item(1, '👥', 'Friends'),
+                _item(1, _navIcon(Icons.group, _tab == 1), 'Friends'),
                 _divider(),
-                _item(2, '🏆', 'Rankings'),
+                _item(2, _navIcon(Icons.emoji_events, _tab == 2), 'Rankings'),
                 _divider(),
-                _item(3, '👤', 'Profile'),
+                _item(3, _navIcon(Icons.person, _tab == 3), 'Profile'),
               ],
             ),
           ),
@@ -75,10 +76,23 @@ class _RootShellState extends State<RootShell> {
     );
   }
 
+  Widget _navIcon(IconData icon, bool sel) {
+    return Icon(icon,
+        size: 24, color: sel ? AppColors.orange : AppColors.textDim);
+  }
+
+  Widget _knightIcon(bool sel) {
+    return BlackKnight(
+      size: 24,
+      fillColor: sel ? AppColors.orange : const Color(0xFF7E94AB),
+      strokeColor: sel ? AppColors.orangeDeep : const Color(0xFF3A4A5E),
+    );
+  }
+
   Widget _divider() =>
       const SizedBox(height: 26, child: VerticalDivider(color: Colors.white12));
 
-  Widget _item(int index, String icon, String label) {
+  Widget _item(int index, Widget icon, String label) {
     final sel = _tab == index;
     return Expanded(
       child: GestureDetector(
@@ -99,7 +113,7 @@ class _RootShellState extends State<RootShell> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(icon, style: const TextStyle(fontSize: 22)),
+              icon,
               Text(
                 label,
                 style: TextStyle(

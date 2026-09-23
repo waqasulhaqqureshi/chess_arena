@@ -5,6 +5,8 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:chess_vectors_flutter/chess_vectors_flutter.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
@@ -50,7 +52,7 @@ class FriendsScreen extends StatelessWidget {
             const Center(
               child: Column(
                 children: [
-                  Text('👥', style: TextStyle(fontSize: 64)),
+                  Icon(Icons.group, size: 64, color: AppColors.textDim),
                   SizedBox(height: 12),
                   Text(
                     'No friends yet',
@@ -70,7 +72,7 @@ class FriendsScreen extends StatelessWidget {
             ArenaButton(
               label: 'Invite friends',
               onPressed: () => showArenaSnack(context,
-                  'Invites arrive with the online update 💌'),
+                  'Invites arrive with the online update '),
             ),
           ],
         ),
@@ -133,7 +135,7 @@ class ProfileScreen extends StatelessWidget {
               ),
               child: Text(
                 online
-                    ? '● Supabase: Online ☁️'
+                    ? '● Supabase: Online '
                     : '● Supabase: Local only (offline)',
                 style: TextStyle(
                   fontSize: 12,
@@ -149,11 +151,14 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 Expanded(
                     child: _statCard(
-                        '📊', 'Rating', '${repo.rating}')),
+                        const Icon(Icons.bar_chart,
+                            size: 24, color: AppColors.orange),
+                        'Rating',
+                        '${repo.rating}')),
                 const SizedBox(width: 10),
                 Expanded(
                     child:
-                        _statCard('🪙', 'Coins', '${repo.coins}')),
+                        _statCard(SvgPicture.asset('assets/icons/coin.svg', width: 24, height: 24), 'Coins', '${repo.coins}')),
               ],
             ),
             const SizedBox(height: 10),
@@ -161,14 +166,20 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 Expanded(
                     child: _statCard(
-                        '🎮', 'Games', '${repo.games}')),
+                        const Icon(Icons.videogame_asset,
+                            size: 24, color: Color(0xFF3FA7FF)),
+                        'Games',
+                        '${repo.games}')),
                 const SizedBox(width: 10),
                 Expanded(
                     child: _statCard(
-                        '🔥', 'Streak', '${repo.streak}')),
+                        const Icon(Icons.local_fire_department,
+                            size: 24, color: AppColors.orange),
+                        'Streak',
+                        '${repo.streak}')),
                 const SizedBox(width: 10),
                 Expanded(
-                    child: _statCard('🧩', 'Puzzles',
+                    child: _statCard(const Icon(Icons.extension, size: 24, color: Color(0xFF9B7BF5)), 'Puzzles',
                         '${repo.puzzlesSolved}')),
               ],
             ),
@@ -177,15 +188,21 @@ class ProfileScreen extends StatelessWidget {
               children: [
                 Expanded(
                     child:
-                        _statCard('🏆', 'Wins', '${repo.wins}')),
+                        _statCard(const Icon(Icons.emoji_events, size: 24, color: AppColors.gold), 'Wins', '${repo.wins}')),
                 const SizedBox(width: 10),
                 Expanded(
                     child: _statCard(
-                        '🤝', 'Draws', '${repo.draws}')),
+                        const Icon(Icons.handshake,
+                            size: 24, color: AppColors.textDim),
+                        'Draws',
+                        '${repo.draws}')),
                 const SizedBox(width: 10),
                 Expanded(
                     child: _statCard(
-                        '😞', 'Losses', '${repo.losses}')),
+                        const Icon(Icons.sentiment_dissatisfied,
+                            size: 24, color: AppColors.red),
+                        'Losses',
+                        '${repo.losses}')),
               ],
             ),
             const SizedBox(height: 14),
@@ -204,7 +221,7 @@ class ProfileScreen extends StatelessWidget {
               label: 'Create Account',
               subtitle: 'Sync rating & games to the cloud',
               onPressed: () => showArenaSnack(context,
-                  'Accounts arrive with the online update ☁️'),
+                  'Accounts arrive with the online update '),
             ),
           ],
         ),
@@ -212,11 +229,11 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _statCard(String icon, String label, String value) {
+  Widget _statCard(Widget icon, String label, String value) {
     return ArenaCard(
       child: Column(
         children: [
-          Text(icon, style: const TextStyle(fontSize: 22)),
+          icon,
           const SizedBox(height: 4),
           Text(value,
               style: const TextStyle(
@@ -231,23 +248,28 @@ class ProfileScreen extends StatelessWidget {
     final games = Database.recentGames(limit: 5);
     if (games.isEmpty) {
       return [
-        Text('No games yet — go play! ♞', style: AppTheme.dim13),
+        Text('No games yet — go play!', style: AppTheme.dim13),
       ];
     }
     return games.map((g) {
       final tag = g['result'] as String? ?? '?';
       final icon = tag == 'w'
-          ? '🏆'
+          ? Icons.emoji_events
           : tag == 'd'
-              ? '🤝'
-              : '😞';
+              ? Icons.handshake
+              : Icons.sentiment_dissatisfied;
+      final iconColor = tag == 'w'
+          ? AppColors.gold
+          : tag == 'd'
+              ? AppColors.textDim
+              : AppColors.red;
       final delta =
           ((g['ratingAfter'] as int?) ?? 0) - ((g['ratingBefore'] as int?) ?? 0);
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
           children: [
-            Text(icon, style: const TextStyle(fontSize: 16)),
+            Icon(icon, size: 18, color: iconColor),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
@@ -302,8 +324,7 @@ class WatchScreen extends StatelessWidget {
             return ArenaCard(
               child: ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: const Text('🔴',
-                    style: TextStyle(fontSize: 22)),
+                leading: const Icon(Icons.fiber_manual_record, color: AppColors.red, size: 18),
                 title: Text(
                   '${a['name']}  vs  ${b['name']}',
                   maxLines: 1,
@@ -316,7 +337,7 @@ class WatchScreen extends StatelessWidget {
                 trailing: const Icon(Icons.play_circle_fill,
                     color: AppColors.orange, size: 30),
                 onTap: () => showArenaSnack(context,
-                    'Spectating arrives with the online update 👀'),
+                    'Spectating arrives with the online update '),
               ),
             );
           },
@@ -340,17 +361,17 @@ class HighlightsScreen extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           children: const [
             _HighlightCard(
-              emoji: '♞',
+              thumb: const BlackKnight(size: 30),
               title: 'Brilliant knight sacrifice',
               subtitle: 'GM Carlsen · 2h ago · 12K views',
             ),
             _HighlightCard(
-              emoji: '👑',
+              thumb: const Icon(Icons.workspace_premium, size: 30, color: AppColors.gold),
               title: 'Queen odds comeback',
               subtitle: 'Nightingale · 5h ago · 8K views',
             ),
             _HighlightCard(
-              emoji: '🔥',
+              thumb: const Icon(Icons.local_fire_department, size: 30, color: AppColors.orange),
               title: 'Fastest mate of the day — 9 moves!',
               subtitle: 'pawnstormer · 1d ago · 31K views',
             ),
@@ -362,11 +383,11 @@ class HighlightsScreen extends StatelessWidget {
 }
 
 class _HighlightCard extends StatelessWidget {
-  final String emoji;
+  final Widget thumb;
   final String title;
   final String subtitle;
   const _HighlightCard(
-      {required this.emoji, required this.title, required this.subtitle});
+      {required this.thumb, required this.title, required this.subtitle});
 
   @override
   Widget build(BuildContext context) {
@@ -383,7 +404,7 @@ class _HighlightCard extends StatelessWidget {
               color: AppColors.cardLight,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Text(emoji, style: const TextStyle(fontSize: 28)),
+            child: thumb,
           ),
           title: Text(title,
               style: const TextStyle(fontWeight: FontWeight.w800)),
@@ -391,7 +412,7 @@ class _HighlightCard extends StatelessWidget {
           trailing: const Icon(Icons.play_circle_fill,
               color: AppColors.orange, size: 30),
           onTap: () => showArenaSnack(
-              context, 'Replays arrive with the online update 🎬'),
+              context, 'Replays arrive with the online update '),
         ),
       ),
     );

@@ -3,6 +3,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
@@ -193,7 +194,7 @@ class _TimeControlsSheetState extends State<_TimeControlsSheet> {
                   final sel = _sel.contains(tc.id);
                   return ListTile(
                     contentPadding: EdgeInsets.zero,
-                    leading: Text(tc.icon, style: const TextStyle(fontSize: 30)),
+                    leading: SvgPicture.asset(tc.iconAsset, width: 36, height: 36),
                     title: Text(tc.name,
                         style: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.w800)),
@@ -288,31 +289,31 @@ class _SettingsDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _toggle(context, s, '🔊', 'Sound', s.sound, 'sound'),
-            _toggle(context, s, '▦', 'Show last move', s.showLastMove,
+            _toggle(context, s, Icons.volume_up, 'Sound', s.sound, 'sound'),
+            _toggle(context, s, Icons.grid_on, 'Show last move', s.showLastMove,
                 'showLastMove'),
-            _toggle(context, s, '❏', 'Piece animation', s.pieceAnimation,
+            _toggle(context, s, Icons.animation, 'Piece animation', s.pieceAnimation,
                 'pieceAnimation'),
-            _toggle(context, s, '❓', 'Show move help', s.showMoveHelp,
+            _toggle(context, s, Icons.help_outline, 'Show move help', s.showMoveHelp,
                 'showMoveHelp'),
-            _toggle(context, s, '✓', 'Confirm my moves', s.confirmMoves,
+            _toggle(context, s, Icons.check_circle_outline, 'Confirm my moves', s.confirmMoves,
                 'confirmMoves'),
-            _toggle(context, s, '♛', 'Auto promote queen', s.autoQueen,
+            _toggle(context, s, Icons.workspace_premium, 'Auto promote queen', s.autoQueen,
                 'autoQueen'),
-            _toggle(context, s, '💬', 'Show chat', s.showChat, 'showChat'),
+            _toggle(context, s, Icons.chat_bubble_outline, 'Show chat', s.showChat, 'showChat'),
           ],
         ),
       ),
     );
   }
 
-  Widget _toggle(BuildContext context, SettingsController s, String icon,
+  Widget _toggle(BuildContext context, SettingsController s, IconData icon,
       String label, bool value, String key) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Text(icon, style: const TextStyle(fontSize: 18)),
+          Icon(icon, size: 22, color: AppColors.orange),
           const SizedBox(width: 10),
           Expanded(
             child: Text(label,
@@ -389,19 +390,23 @@ class _GameOverDialog extends StatelessWidget {
         '${delta >= 0 ? '+' : ''}$delta → ${info.newRating}';
     final deltaColor =
         delta > 0 ? AppColors.greenBright : delta < 0 ? AppColors.red : AppColors.textDim;
-    String emoji;
+    final IconData resultIcon;
+    final Color resultColor;
     if (info.playerScore == 1) {
-      emoji = '🏆';
+      resultIcon = Icons.emoji_events;
+      resultColor = AppColors.gold;
     } else if (info.playerScore == 0.5) {
-      emoji = '🤝';
+      resultIcon = Icons.handshake;
+      resultColor = AppColors.textDim;
     } else {
-      emoji = '😞';
+      resultIcon = Icons.sentiment_dissatisfied;
+      resultColor = AppColors.red;
     }
     return AlertDialog(
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 52)),
+          Icon(resultIcon, size: 56, color: resultColor),
           const SizedBox(height: 8),
           Text(info.title,
               style:
@@ -409,29 +414,37 @@ class _GameOverDialog extends StatelessWidget {
           const SizedBox(height: 4),
           Text(info.reason, style: AppTheme.dim13),
           const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text('📊 ', style: TextStyle(fontSize: 16)),
-              Text(
-                deltaText,
-                style: TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: deltaColor),
-              ),
-              const SizedBox(width: 14),
-              const Text('🪙', style: TextStyle(fontSize: 16)),
-              const SizedBox(width: 4),
-              Text(
-                '+${info.coinsEarned}',
-                style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.gold),
-              ),
-            ],
-          ),
+          if (info.rated)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.bar_chart,
+                    size: 18, color: AppColors.textDim),
+                Text(
+                  deltaText,
+                  style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      color: deltaColor),
+                ),
+                const SizedBox(width: 14),
+                SvgPicture.asset('assets/icons/coin.svg',
+                    width: 18, height: 18),
+                const SizedBox(width: 4),
+                Text(
+                  '+${info.coinsEarned}',
+                  style: const TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.gold),
+                ),
+              ],
+            )
+          else
+            Text(
+              'Not rated · no rating or coin changes',
+              style: AppTheme.dim13,
+            ),
           if (!AdsService.isConfigured) ...[
             const SizedBox(height: 10),
             Container(
@@ -442,7 +455,7 @@ class _GameOverDialog extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
-                '🎬 Ad placeholder — fullscreen ad shows here in the online build',
+                'Ad placeholder — fullscreen ad shows here in the online build',
                 textAlign: TextAlign.center,
                 style: AppTheme.dim12,
               ),

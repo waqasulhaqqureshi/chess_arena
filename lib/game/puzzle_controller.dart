@@ -35,7 +35,7 @@ int _promoFromChar(String c) {
 class PuzzleController extends ChangeNotifier {
   final ArenaRepository repo;
   final SettingsController settings;
-  final bool isDaily;
+  bool isDaily;
 
   late Puzzle puzzle;
   late ChessGame game;
@@ -47,6 +47,7 @@ class PuzzleController extends ChangeNotifier {
   int? hintFrom;
   int? hintTo;
   bool usedSolution = false;
+  int attempts = 0;
   int _actionToken = 0;
 
   PuzzleController({
@@ -55,15 +56,16 @@ class PuzzleController extends ChangeNotifier {
     required Puzzle initial,
     this.isDaily = false,
   }) {
-    loadPuzzle(initial);
+    loadPuzzle(initial, keepDaily: isDaily);
   }
 
   bool get orientationWhite => puzzle.whiteToMove;
   bool get alreadySolved =>
       Database.solvedPuzzles().contains(puzzle.id);
 
-  void loadPuzzle(Puzzle p) {
+  void loadPuzzle(Puzzle p, {bool keepDaily = false}) {
     _actionToken++;
+    if (!keepDaily) isDaily = false;
     puzzle = p;
     game = ChessGame.fromFen(p.fen);
     selected = null;
@@ -74,6 +76,7 @@ class PuzzleController extends ChangeNotifier {
     hintFrom = null;
     hintTo = null;
     usedSolution = false;
+    attempts = 0;
     SoundService.configure(enabled: settings.sound);
     notifyListeners();
   }
@@ -123,6 +126,7 @@ class PuzzleController extends ChangeNotifier {
   }
 
   Future<void> _attempt(ChessMove m) async {
+    attempts++;
     final moverWhite = game.whiteToMove;
     final san = game.playMove(m);
     if (san == null) {
@@ -192,5 +196,6 @@ class PuzzleController extends ChangeNotifier {
     if (isDaily) {
       await repo.completeDailyPuzzle();
     }
+    repo.refreshPuzzles();
   }
 }

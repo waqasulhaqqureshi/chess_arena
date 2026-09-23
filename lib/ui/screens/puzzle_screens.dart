@@ -2,6 +2,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/theme/app_theme.dart';
@@ -31,13 +32,13 @@ class PuzzleListScreen extends StatelessWidget {
             ArenaCard(
               child: ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading:
-                    const Text('📅', style: TextStyle(fontSize: 32)),
+                leading: const Icon(Icons.calendar_month,
+                    size: 34, color: AppColors.orange),
                 title: Text('Daily Puzzle — #${daily.id}',
                     style: const TextStyle(fontWeight: FontWeight.w800)),
                 subtitle: Text(
                     repo.dailyPuzzleDone
-                        ? 'Completed! Come back tomorrow 🎉'
+                        ? 'Completed! Come back tomorrow'
                         : 'Solve for +10 coins',
                     style: AppTheme.dim13),
                 trailing: repo.dailyPuzzleDone
@@ -186,7 +187,7 @@ class _PuzzleBody extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                c.solved ? 'Solved! 🎉' : c.puzzle.title,
+                c.solved ? 'Solved!' : c.puzzle.title,
                 style: const TextStyle(
                     fontSize: 15, fontWeight: FontWeight.w700),
               ),
@@ -199,25 +200,25 @@ class _PuzzleBody extends StatelessWidget {
                   children: [
                     Expanded(
                         child: _coinButton(
-                            context, '❓', 'Solution', 20, () async {
+                            context, Icons.help, 'Solution', 20, () async {
                       final ok = await context
                           .read<PuzzleController>()
                           .showSolution();
                       if (!ok && context.mounted) {
                         showArenaSnack(context,
-                            'Not enough coins (need 20) 🪙');
+                            'Not enough coins (need 20) ');
                       }
                     })),
                     const SizedBox(width: 12),
                     Expanded(
                         child: _coinButton(
-                            context, '💡', 'Hint', 10, () async {
+                            context, Icons.lightbulb, 'Hint', 10, () async {
                       final ok = await context
                           .read<PuzzleController>()
                           .showHint();
                       if (!ok && context.mounted) {
                         showArenaSnack(context,
-                            'Not enough coins (need 10) 🪙');
+                            'Not enough coins (need 10) ');
                       }
                     })),
                   ],
@@ -244,8 +245,54 @@ class _PuzzleBody extends StatelessWidget {
               style: const TextStyle(
                   fontSize: 13, color: AppColors.textDim),
             ),
+            const SizedBox(height: 8),
+            _navRow(context, c),
+            const SizedBox(height: 12),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _navRow(BuildContext context, PuzzleController c) {
+    final idx = kPuzzles.indexWhere((p) => p.id == c.puzzle.id);
+    final safe = idx < 0 ? 0 : idx;
+    final prev = kPuzzles[(safe - 1 + kPuzzles.length) % kPuzzles.length];
+    final next = kPuzzles[(safe + 1) % kPuzzles.length];
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          _navBtn(Icons.chevron_left,
+              () => context.read<PuzzleController>().loadPuzzle(prev)),
+          Expanded(
+            child: Text(
+              '#${c.puzzle.id} of ${kPuzzles.length} · tries: ${c.attempts}',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                  fontSize: 12,
+                  color: AppColors.textDim,
+                  fontWeight: FontWeight.w700),
+            ),
+          ),
+          _navBtn(Icons.chevron_right,
+              () => context.read<PuzzleController>().loadPuzzle(next)),
+        ],
+      ),
+    );
+  }
+
+  Widget _navBtn(IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: Colors.white10),
+        ),
+        child: Icon(icon, color: Colors.white),
       ),
     );
   }
@@ -289,7 +336,7 @@ class _PuzzleBody extends StatelessWidget {
     return const SizedBox(height: 8);
   }
 
-  Widget _coinButton(BuildContext context, String icon, String label,
+  Widget _coinButton(BuildContext context, IconData icon, String label,
       int cost, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
@@ -305,9 +352,13 @@ class _PuzzleBody extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(icon, style: const TextStyle(fontSize: 20)),
+                Icon(icon, size: 22, color: AppColors.orangeLight),
                 const SizedBox(width: 6),
-                Text('🪙$cost',
+                SvgPicture.asset('assets/icons/coin.svg',
+                    width: 14,
+                    height: 14),
+                const SizedBox(width: 3),
+                Text('$cost',
                     style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w800,

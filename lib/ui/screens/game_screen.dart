@@ -1,4 +1,8 @@
 /// Game screen — wood theme, player bars, board, captures, move list.
+///
+/// Performance: the 100 ms clock ticker only rebuilds the tiny clock
+/// leaves — board / move-list subtrees are [Selector]-gated on immutable
+/// snapshots ([_BoardView], [_InfoView]) so they rebuild solely on moves.
 library;
 
 import 'package:flutter/material.dart';
@@ -31,6 +35,122 @@ class GameScreen extends StatelessWidget {
     );
   }
 }
+
+// ---------------------------------------------------------------- snapshots
+
+class _TopState {
+  final bool thinking;
+  final bool over;
+  const _TopState(this.thinking, this.over);
+
+  @override
+  bool operator ==(Object o) =>
+      o is _TopState && thinking == o.thinking && over == o.over;
+  @override
+  int get hashCode => thinking.hashCode ^ over.hashCode;
+}
+
+class _ClockView {
+  final double ms;
+  final bool active;
+  const _ClockView(this.ms, this.active);
+
+  @override
+  bool operator ==(Object o) =>
+      o is _ClockView && ms == o.ms && active == o.active;
+  @override
+  int get hashCode => ms.hashCode ^ active.hashCode;
+}
+
+class _BoardView {
+  final int len;
+  final int? sel;
+  final String targets;
+  final int? lastFrom;
+  final int? lastTo;
+  final int? check;
+  final int? pendF;
+  final int? pendT;
+  final bool showLast;
+  final bool animate;
+  const _BoardView({
+    required this.len,
+    required this.sel,
+    required this.targets,
+    required this.lastFrom,
+    required this.lastTo,
+    required this.check,
+    required this.pendF,
+    required this.pendT,
+    required this.showLast,
+    required this.animate,
+  });
+
+  factory _BoardView.from(GameController c, bool showLast, bool animate) {
+    return _BoardView(
+      len: c.game.moveHistory.length,
+      sel: c.selected,
+      targets: c.selectedMoves
+          .map((m) => '${m.from}-${m.to}-${m.promotion}')
+          .join(','),
+      lastFrom: c.lastMove?.from,
+      lastTo: c.lastMove?.to,
+      check: c.kingInCheckSquare(),
+      pendF: c.pendingFrom,
+      pendT: c.pendingTo,
+      showLast: showLast,
+      animate: animate,
+    );
+  }
+
+  @override
+  bool operator ==(Object o) =>
+      o is _BoardView &&
+      len == o.len &&
+      sel == o.sel &&
+      targets == o.targets &&
+      lastFrom == o.lastFrom &&
+      lastTo == o.lastTo &&
+      check == o.check &&
+      pendF == o.pendF &&
+      pendT == o.pendT &&
+      showLast == o.showLast &&
+      animate == o.animate;
+
+  @override
+  int get hashCode => Object.hash(
+      len, sel, targets, lastFrom, lastTo, check, pendF, pendT, showLast);
+}
+
+class _InfoView {
+  final String status;
+  final String moves;
+  final String caps;
+  final int diff;
+  const _InfoView(this.status, this.moves, this.caps, this.diff);
+
+  factory _InfoView.from(GameController c) {
+    final (w, b) = c.capturedPieces();
+    return _InfoView(
+      c.statusText(),
+      c.game.sanHistory.join(' '),
+      '${w.join(',')}|${b.join(',')}',
+      c.materialDiff(),
+    );
+  }
+
+  @override
+  bool operator ==(Object o) =>
+      o is _InfoView &&
+      status == o.status &&
+      moves == o.moves &&
+      caps == o.caps &&
+      diff == o.diff;
+  @override
+  int get hashCode => Object.hash(status, moves, caps, diff);
+}
+
+// ------------------------------------------------------------------- body
 
 class _GameBody extends StatefulWidget {
   const _GameBody();
@@ -105,19 +225,7 @@ class _GameBodyState extends State<_GameBody> {
 
   @override
   Widget build(BuildContext context) {
-    final c = context.watch<GameController>();
-    final setup = c.setup;
-    final oppClock = setup.playerIsWhite
-        ? formatClock(c.blackMs)
-        : formatClock(c.whiteMs);
-    final myClock = setup.playerIsWhite
-        ? formatClock(c.whiteMs)
-        : formatClock(c.blackMs);
-    final oppActive = !c.isGameOver &&
-        c.game.whiteToMove == !setup.playerIsWhite;
-    final myActive =
-        !c.isGameOver && c.game.whiteToMove == setup.playerIsWhite;
-
+    final setup = context.read<GameController>().setup;
     return Scaffold(
       backgroundColor: Colors.black,
       body: Container(
@@ -131,44 +239,77 @@ class _GameBodyState extends State<_GameBody> {
         child: SafeArea(
           child: Column(
             children: [
-              _topBar(context, c),
-              PlayerBar(
-                name: setup.opponentName,
-                flag: setup.opponentFlag,
-                rating: setup.opponentRating,
-                clockText: oppClock,
-                active: oppActive,
+              Selector<GameController, _TopState>(
+                selector: (_, c) => _TopState(c.cpuThinking, c.isGameOver),
+                builder: (_, v, __) => _topBar(context, v),
+              ),
+              // Opponent bar (rebuilds on clock ticks only).
+              Selector<GameController, _ClockView>(
+                selector: (_, c) => _ClockView(
+                  setup.playerIsWhite ? c.blackMs : c.whiteMs,
+                  !c.isGameOver &&
+                      c.game.whiteToMove == !setup.playerIsWhite,
+                ),
+                builder: (_, clock, __) => PlayerBar(
+                  name: setup.opponentName,
+                  flag: setup.opponentFlag,
+                  rating: setup.opponentRating,
+                  clockText: formatClock(clock.ms),
+                  active: clock.active,
+                ),
               ),
               Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                child: ChessBoardWidget(
-                  game: c.game,
-                  orientationWhite: setup.playerIsWhite,
-                  onTap: c.tapSquare,
-                  selected: c.selected,
-                  selectedMoves: c.selectedMoves,
-                  lastMove: c.lastMove,
-                  checkSquare: c.kingInCheckSquare(),
-                  pendingFrom: c.pendingFrom,
-                  pendingTo: c.pendingTo,
-                  showLastMove:
-                      context.watch<SettingsController>().showLastMove,
-                  animate: context
-                      .watch<SettingsController>()
-                      .pieceAnimation,
-                  animKey: c.game.moveHistory.length,
+                child: RepaintBoundary(
+                  child: Selector2<GameController, SettingsController,
+                      _BoardView>(
+                    selector: (_, c, s) => _BoardView.from(
+                        c, s.showLastMove, s.pieceAnimation),
+                    builder: (_, v, __) {
+                      final c = context.read<GameController>();
+                      return ChessBoardWidget(
+                        game: c.game,
+                        orientationWhite: setup.playerIsWhite,
+                        onTap: c.tapSquare,
+                        selected: v.sel,
+                        selectedMoves: c.selectedMoves,
+                        lastMove: c.lastMove,
+                        checkSquare: v.check,
+                        pendingFrom: v.pendF,
+                        pendingTo: v.pendT,
+                        showLastMove: v.showLast,
+                        animate: v.animate,
+                        animKey: v.len,
+                      );
+                    },
+                  ),
                 ),
               ),
-              PlayerBar(
-                name:
-                    '${context.watch<ArenaRepository>().name} (You)',
-                flag: context.watch<ArenaRepository>().flagEmoji,
-                rating: context.watch<ArenaRepository>().rating,
-                clockText: myClock,
-                active: myActive,
+              // Player bar (rebuilds on clock ticks only).
+              Selector<GameController, _ClockView>(
+                selector: (_, c) => _ClockView(
+                  setup.playerIsWhite ? c.whiteMs : c.blackMs,
+                  !c.isGameOver &&
+                      c.game.whiteToMove == setup.playerIsWhite,
+                ),
+                builder: (_, clock, __) {
+                  final repo = context.watch<ArenaRepository>();
+                  return PlayerBar(
+                    name: '${repo.name} (You)',
+                    flag: repo.flagEmoji,
+                    rating: repo.rating,
+                    clockText: formatClock(clock.ms),
+                    active: clock.active,
+                  );
+                },
               ),
-              Expanded(child: _infoPanel(context, c)),
+              Expanded(
+                child: Selector<GameController, _InfoView>(
+                  selector: (_, c) => _InfoView.from(c),
+                  builder: (_, v, __) => _infoPanel(context, v),
+                ),
+              ),
               if (AdsService.showBannerPlaceholder)
                 Container(
                   width: double.infinity,
@@ -179,10 +320,17 @@ class _GameBodyState extends State<_GameBody> {
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(color: Colors.white12),
                   ),
-                  child: Text(
-                    '🎬 Ad banner placeholder (google_mobile_ads)',
-                    textAlign: TextAlign.center,
-                    style: AppTheme.dim12,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.movie_filter,
+                          size: 14, color: AppColors.textDim),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Ad banner placeholder (google_mobile_ads)',
+                        style: AppTheme.dim12,
+                      ),
+                    ],
                   ),
                 ),
             ],
@@ -192,7 +340,9 @@ class _GameBodyState extends State<_GameBody> {
     );
   }
 
-  Widget _topBar(BuildContext context, GameController c) {
+  Widget _topBar(BuildContext context, _TopState v) {
+    final c = context.read<GameController>();
+    final showChat = context.watch<SettingsController>().showChat;
     return Container(
       color: Colors.black,
       padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -203,22 +353,34 @@ class _GameBodyState extends State<_GameBody> {
             onPressed: () => _confirmExit(context, c),
           ),
           const Spacer(),
-          if (context.watch<SettingsController>().showChat)
+          if (showChat)
             IconButton(
               icon: const Icon(Icons.chat_bubble, color: Colors.white),
               onPressed: () => showArenaSnack(
-                  context, 'Chat arrives with the online update 💬'),
+                  context, 'Chat arrives with the online update'),
             ),
           IconButton(
             icon: const Icon(Icons.undo, color: Colors.white),
             tooltip: 'Takeback',
-            onPressed: c.cpuThinking || c.isGameOver ? null : c.takeback,
+            onPressed: v.thinking || v.over ? null : c.takeback,
+          ),
+          IconButton(
+            icon: const Icon(Icons.handshake, color: Colors.white),
+            tooltip: 'Offer draw',
+            onPressed: v.thinking || v.over
+                ? null
+                : () async {
+                    final r = await c.offerDraw();
+                    if (r == 'declined' && context.mounted) {
+                      showArenaSnack(
+                          context, 'Draw declined — keep fighting!');
+                    }
+                  },
           ),
           IconButton(
             icon: const Icon(Icons.flag, color: Colors.white),
             tooltip: 'Resign',
-            onPressed:
-                c.isGameOver ? null : () => _confirmResign(context, c),
+            onPressed: v.over ? null : () => _confirmResign(context, c),
           ),
           IconButton(
             icon: const Icon(Icons.settings, color: Colors.white),
@@ -229,14 +391,13 @@ class _GameBodyState extends State<_GameBody> {
     );
   }
 
-  Widget _infoPanel(BuildContext context, GameController c) {
+  Widget _infoPanel(BuildContext context, _InfoView v) {
+    final c = context.read<GameController>();
     final (whiteCaps, blackCaps) = c.capturedPieces();
-    final diff = c.materialDiff();
-    final repo = context.watch<ArenaRepository>();
     final myWhite = c.setup.playerIsWhite;
     final myCaps = myWhite ? whiteCaps : blackCaps;
     final oppCaps = myWhite ? blackCaps : whiteCaps;
-    final myDiff = myWhite ? diff : -diff;
+    final myDiff = myWhite ? v.diff : -v.diff;
 
     return Container(
       width: double.infinity,
@@ -249,7 +410,7 @@ class _GameBodyState extends State<_GameBody> {
               children: [
                 Expanded(
                   child: Text(
-                    c.statusText(),
+                    v.status,
                     style: const TextStyle(
                         fontSize: 15, fontWeight: FontWeight.w800),
                   ),
@@ -265,12 +426,11 @@ class _GameBodyState extends State<_GameBody> {
               ],
             ),
             const SizedBox(height: 4),
-            _capsRow('You', myCaps, repo.flagEmoji),
+            _capsRow('You', myCaps),
             const SizedBox(height: 2),
-            _capsRow(c.setup.opponentName, oppCaps,
-                c.setup.isCpuAvatar ? 'cpu' : c.setup.opponentFlag),
+            _capsRow(c.setup.opponentName, oppCaps),
             const SizedBox(height: 6),
-            if (c.game.sanHistory.isNotEmpty)
+            if (v.moves.isNotEmpty)
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(8),
@@ -290,7 +450,7 @@ class _GameBodyState extends State<_GameBody> {
     );
   }
 
-  Widget _capsRow(String who, List<int> caps, String flag) {
+  Widget _capsRow(String who, List<int> caps) {
     return Row(
       children: [
         SizedBox(
@@ -306,9 +466,8 @@ class _GameBodyState extends State<_GameBody> {
           child: Wrap(
             spacing: 0,
             runSpacing: 0,
-            children: caps
-                .map((p) => PieceWidget(piece: p, size: 20))
-                .toList(),
+            children:
+                caps.map((p) => PieceWidget(piece: p, size: 20)).toList(),
           ),
         ),
       ],
@@ -319,27 +478,33 @@ class _GameBodyState extends State<_GameBody> {
     final sb = StringBuffer();
     for (var i = 0; i < g.sanHistory.length; i += 2) {
       sb.write('${i ~/ 2 + 1}. ${g.sanHistory[i]}');
-      if (i + 1 < g.sanHistory.length) sb.write(' ${g.sanHistory[i + 1]}  ');
-      if (i + 1 >= g.sanHistory.length) sb.write('  ');
+      if (i + 1 < g.sanHistory.length) {
+        sb.write(' ${g.sanHistory[i + 1]}  ');
+      } else {
+        sb.write('  ');
+      }
     }
     return sb.toString();
   }
 
   Future<void> _confirmResign(
       BuildContext context, GameController c) async {
+    final played = c.playerHasMoved;
     final yes = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Resign game?'),
-        content: const Text('This counts as a loss.'),
+        content: Text(played
+            ? 'This counts as a loss.'
+            : 'No moves played — game will be aborted (not rated).'),
         actions: [
           TextButton(
               onPressed: () => Navigator.of(context).pop(false),
               child: const Text('Keep playing')),
           TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Resign',
-                  style: TextStyle(color: AppColors.red))),
+              child: Text(played ? 'Resign' : 'Abort',
+                  style: const TextStyle(color: AppColors.red))),
         ],
       ),
     );
@@ -352,19 +517,22 @@ class _GameBodyState extends State<_GameBody> {
       Navigator.of(context).pop();
       return;
     }
+    final played = c.playerHasMoved;
     final yes = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
         title: const Text('Leave game?'),
-        content: const Text('Leaving counts as a loss.'),
+        content: Text(played
+            ? 'Leaving counts as a loss.'
+            : 'No moves played — game will be aborted (not rated).'),
         actions: [
           TextButton(
               onPressed: () => Navigator.of(context).pop(false),
               child: const Text('Stay')),
           TextButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Leave',
-                  style: TextStyle(color: AppColors.red))),
+              child: Text(played ? 'Leave' : 'Abort',
+                  style: const TextStyle(color: AppColors.red))),
         ],
       ),
     );

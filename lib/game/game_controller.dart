@@ -63,6 +63,7 @@ class GameOverInfo {
   final int ratingDelta;
   final int newRating;
   final int coinsEarned;
+  final bool rated;
   const GameOverInfo({
     required this.title,
     required this.reason,
@@ -70,6 +71,7 @@ class GameOverInfo {
     required this.ratingDelta,
     required this.newRating,
     required this.coinsEarned,
+    this.rated = true,
   });
 }
 
@@ -303,7 +305,14 @@ class GameController extends ChangeNotifier {
       return;
     }
     final token = ++_thinkToken;
-    final res = await CpuBrain.think(game, setup.difficulty);
+    final cpuClockMs =
+        game.whiteToMove ? whiteMs : blackMs; // CPU side to move
+    final res = await CpuBrain.think(
+      game,
+      setup.difficulty,
+      clockMs: cpuClockMs,
+      incrementMs: setup.timeControl.increment * 1000,
+    );
     if (token != _thinkToken || isGameOver) return; // stale (undo/dispose)
     cpuThinking = false;
     if (res == null || res.move == null) {
@@ -465,6 +474,32 @@ class GameController extends ChangeNotifier {
     return setup.isCpuAvatar ? 'CPU wins' : 'Opponent wins';
   }
 
+  /// True once the human has played at least one move.
+  bool get playerHasMoved {
+    for (var i = 0; i < game.moveHistory.length; i++) {
+      if ((i % 2 == 0) == setup.playerIsWhite) return true;
+    }
+    return false;
+  }
+
+  /// Offers a draw. Returns 'accepted', 'declined' or 'na'.
+  /// The CPU accepts when not clearly winning (never before move 10).
+  Future<String> offerDraw() async {
+    if (isGameOver || cpuThinking || !isPlayerTurn) return 'na';
+    if (game.moveHistory.length < 20) {
+      SoundService.click();
+      return 'declined';
+    }
+    final cpuWhite = !setup.playerIsWhite;
+    final s = cpuWhite ? evaluate(game) : -evaluate(game);
+    if (s < 80) {
+      await _finish(0.5, 'Draw · Agreement', 'Draw agreed');
+      return 'accepted';
+    }
+    SoundService.click();
+    return 'declined';
+  }
+
   Future<void> _finish(
     double playerScore,
     String reason,
@@ -473,29 +508,37 @@ class GameController extends ChangeNotifier {
     if (isGameOver) return;
     _timer?.cancel();
     cpuThinking = false;
+    // Abort (unrated): resigning/flagging/exiting before your first move
+    // records nothing — no rating, form, coins or mission progress.
+    final abort = !playerHasMoved && playerScore == 0.0;
     if (playerScore == 1) {
       SoundService.win();
     } else {
       SoundService.gameEnd();
     }
-    final delta = await repo.recordGameResult(
-      score: playerScore,
-      opponentRating: setup.opponentRating,
-      opponent: setup.opponentName,
-      myColor: setup.playerIsWhite ? 'w' : 'b',
-      sans: List<String>.from(game.sanHistory),
-      timeControl: setup.timeControl.id,
-    );
-    await repo.completeDailyGame();
-    await repo.bumpMissionProgress();
-    final earned = repo.coins - _coinsBefore;
+    var delta = 0;
+    var earned = 0;
+    if (!abort) {
+      delta = await repo.recordGameResult(
+        score: playerScore,
+        opponentRating: setup.opponentRating,
+        opponent: setup.opponentName,
+        myColor: setup.playerIsWhite ? 'w' : 'b',
+        sans: List<String>.from(game.sanHistory),
+        timeControl: setup.timeControl.id,
+      );
+      await repo.completeDailyGame();
+      await repo.bumpMissionProgress();
+      earned = repo.coins - _coinsBefore;
+    }
     gameOverInfo = GameOverInfo(
-      title: _titleFor(playerScore),
-      reason: reason,
+      title: abort ? 'Game aborted' : _titleFor(playerScore),
+      reason: abort ? 'Not rated · no moves played' : reason,
       playerScore: playerScore,
       ratingDelta: delta,
       newRating: repo.rating,
       coinsEarned: earned,
+      rated: !abort,
     );
     notifyListeners();
     // Fullscreen ad hook (no-op until ads are integrated).

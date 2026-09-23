@@ -77,5 +77,11 @@ Docs: [ARCHITECTURE](docs/ARCHITECTURE.md) · [CPU_ENGINE](docs/CPU_ENGINE.md) �
   computed on a background isolate so the UI never janks.
 - **Offline-first**: every feature works without network; Supabase is an
   additive sync layer, all guarded with try/catch fallbacks.
-- **Unicode pieces** styled with outlines (3D asset pack can be dropped into
-  `PieceWidget` later without touching call sites).
+- **Vector pieces** via [`chess_vectors_flutter`](https://pub.dev/packages/chess_vectors_flutter)
+  (Wikimedia-style set) + bespoke SVG icons (time controls, coin) rendered
+  with [`flutter_svg`](https://pub.dev/packages/flutter_svg) — no emoji art.
+- **Scoped rebuilds**: the 100 ms clock ticker only repaints the clock
+  leaves (`Selector` snapshots); board/move-list rebuild solely on moves.
+- **CPU safety**: repetition-aware search (no sleepy threefolds while
+  winning), clock-scaled think budgets (never self-flags in Bullet),
+  unrated aborts when resigning before your first move, and draw offers.

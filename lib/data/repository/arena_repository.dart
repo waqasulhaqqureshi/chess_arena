@@ -232,6 +232,12 @@ class ArenaRepository extends ChangeNotifier {
     return true;
   }
 
+  /// Lightweight refresh signal (e.g. puzzle list after a solve).
+  void refreshPuzzles() {
+    puzzlesSolved = Database.profile('puzzlesSolved', puzzlesSolved);
+    notifyListeners();
+  }
+
   // ---- rankings (remote first, seeded offline fallback) ----
 
   Future<List<RankingEntry>> rankings() async {

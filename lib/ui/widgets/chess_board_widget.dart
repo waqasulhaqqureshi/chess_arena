@@ -102,7 +102,7 @@ class ChessBoardWidget extends StatelessWidget {
 
     Color overlay = Colors.transparent;
     if (isLastMove) {
-      overlay = AppColors.lastMove.withOpacity( 0.55);
+      overlay = AppColors.lastMove.withOpacity(0.22);
     }
     if (isHint) {
       overlay = AppColors.selectSq.withOpacity( 0.55);
@@ -141,6 +141,17 @@ class ChessBoardWidget extends StatelessWidget {
                       color: isPending
                           ? AppColors.orangeLight
                           : AppColors.selectSq,
+                      width: 3,
+                    ),
+                  ),
+                ),
+              ),
+            if (isLastMove && !isSelected && !isPending)
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(
+                      color: AppColors.lastMove,
                       width: 3,
                     ),
                   ),

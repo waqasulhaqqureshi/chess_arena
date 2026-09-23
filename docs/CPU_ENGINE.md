@@ -38,6 +38,17 @@ scale with your rating: depth 1 → 2 → 3, blunder 30% → 0%, noise ±150 →
 - *Noise* = random jitter added to each root score (variety + inaccuracy).
 - Single-reply positions return instantly.
 
+## Draw awareness + clock-aware budgets (v2)
+
+- **Repetition**: `ChessGame` exposes `positionKey` / `positionCount` and
+  tracks the active search path (`trackSearchKeys`). Any node repeating a
+  position twice before scores 0 (`searchRepeatsDraw`), and the root drops
+  moves that instantly complete a threefold — unless the CPU is losing
+  (static eval < −300 cp), in which case it happily takes the draw.
+- **Time fairness**: `CpuBrain.think(..., clockMs:, incrementMs:)` scales
+  the budget to `clock/25 + increment` (min 80 ms), so Hard can't flag
+  itself in Bullet with 0.5 s left.
+
 ## Threading (`cpu_brain.dart`)
 
 `CpuBrain.think` runs `cpuThinkEntry` via `compute()` (FEN + difficulty JSON

@@ -59,7 +59,7 @@ class PlayerBar extends StatelessWidget {
                 if (showClock)
                   Row(
                     children: [
-                      const Text('⏱️', style: TextStyle(fontSize: 13)),
+                      const Icon(Icons.timer, size: 14, color: AppColors.textDim),
                       const SizedBox(width: 4),
                       Text(
                         clockText,
