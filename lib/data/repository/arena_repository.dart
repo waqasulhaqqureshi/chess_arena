@@ -345,6 +345,7 @@ class SettingsController extends ChangeNotifier {
   bool get showChat => Database.setting('showChat', true);
   int get boardTheme => Database.setting('boardTheme', 0);
   bool get pieceImages => Database.setting('pieceImages', true);
+  bool get useStockfish => Database.setting('useStockfish', true);
 
   Future<void> set(String key, bool value) async {
     await Database.setSetting(key, value);

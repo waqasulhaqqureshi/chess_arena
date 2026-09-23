@@ -13,6 +13,7 @@ import '../data/time_controls.dart';
 import '../engine/chess_ai.dart';
 import '../engine/chess_rules.dart';
 import '../engine/cpu_brain.dart';
+import '../engine/stockfish_service.dart';
 import '../services/ads_service.dart';
 import '../services/sound_service.dart';
 
@@ -375,6 +376,17 @@ class GameController extends ChangeNotifier {
     await _cpuMove();
   }
 
+  /// UCI Skill Level 0..20 scaled from the displayed opponent ELO.
+  int _stockfishSkill() =>
+      ((setup.difficulty.targetElo - 400) / 85).round().clamp(0, 20);
+
+  /// Stockfish time budget: strength-scaled, never burns a low clock.
+  int _stockfishTime(double cpuClockMs) {
+    if (setup.timed && cpuClockMs < 10000) return 200;
+    final e = setup.difficulty.targetElo;
+    return e < 900 ? 300 : (e < 1400 ? 600 : (e < 1800 ? 900 : 1200));
+  }
+
   /// Human-feeling reply cadence: base by strength + randomness, faster
   /// when the CPU clock is low.
   int _paceMs() {
@@ -397,12 +409,31 @@ class GameController extends ChangeNotifier {
     final token = ++_thinkToken;
     final cpuClockMs =
         game.whiteToMove ? whiteMs : blackMs; // CPU side to move
-    final res = await CpuBrain.think(
-      game,
-      setup.difficulty,
-      clockMs: cpuClockMs,
-      incrementMs: setup.timeControl.increment * 1000,
-    );
+
+    // Engine routing: Stockfish (native, via community package) when the
+    // toggle is on AND the binary loads on this platform; otherwise the
+    // built-in Arena brain.
+    ChessMove? chosen;
+    if (settings.useStockfish) {
+      final sf = StockfishService.instance;
+      if (await sf.ensureReady()) {
+        final uci = await sf.bestMoveUci(
+          game.toFen(),
+          skillLevel: _stockfishSkill(),
+          movetimeMs: _stockfishTime(cpuClockMs),
+        );
+        if (uci != null) chosen = parseUciMove(game, uci);
+      }
+    }
+    if (chosen == null) {
+      final res = await CpuBrain.think(
+        game,
+        setup.difficulty,
+        clockMs: cpuClockMs,
+        incrementMs: setup.timeControl.increment * 1000,
+      );
+      chosen = res?.move;
+    }
     if (token != _thinkToken || isGameOver) return; // stale (undo/dispose)
     // Let the reply breathe like a human would.
     final wait = _paceMs() - sw.elapsedMilliseconds;
@@ -411,23 +442,22 @@ class GameController extends ChangeNotifier {
     }
     if (token != _thinkToken || isGameOver) return;
     cpuThinking = false;
-    if (res == null || res.move == null) {
+    if (chosen == null) {
       _checkGameEnd();
       notifyListeners();
       return;
     }
     final moverWhite = game.whiteToMove;
-    final wasCapture = game.board[res.move!.to] != 0 ||
-        (game.board[res.move!.from].abs() == pawn &&
-            res.move!.to == game.ep);
-    final san = game.playMove(res.move!);
+    final wasCapture = game.board[chosen.to] != 0 ||
+        (game.board[chosen.from].abs() == pawn && chosen.to == game.ep);
+    final san = game.playMove(chosen);
     if (san == null) {
       _checkGameEnd();
       notifyListeners();
       return;
     }
-    lastMove = res.move!;
-    _moveLog.add([res.move!.from, res.move!.to, res.move!.promotion]);
+    lastMove = chosen;
+    _moveLog.add([chosen.from, chosen.to, chosen.promotion]);
     _afterMoveClock(moverWhite);
     _moveSound(res.move!, wasCapture);
     _saveLive();

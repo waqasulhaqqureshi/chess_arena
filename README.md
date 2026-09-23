@@ -85,6 +85,9 @@ Docs: [ARCHITECTURE](docs/ARCHITECTURE.md) · [CPU_ENGINE](docs/CPU_ENGINE.md) �
 - **CPU safety**: repetition-aware search (no sleepy threefolds while
   winning), clock-scaled think budgets (never self-flags in Bullet),
   unrated aborts when resigning before your first move, and draw offers.
+- **v5 (Stockfish)**: native Stockfish via the community `stockfish`
+  package (ELO→skill mapping, queued UCI, settings toggle) with automatic
+  fallback to the Arena brain wherever the binary can't load.
 - **v4 (package hardening)**: piece PNGs from `chess_interface`'s bundled
   `modern_minimalist` set, recolored white/black via `BlendMode.srcIn` color
   filter (vector fallback on any asset error); Multiavatar identicons via

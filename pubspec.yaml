@@ -18,6 +18,7 @@ dependencies:
   chess_interface: ">=1.2.1 <2.0.0"   # bundled fillable piece PNGs (modern_minimalist)
   random_avatar: ">=0.0.8 <1.0.0"     # offline Multiavatar identicons
   country_pickers: ">=3.0.1 <4.0.0"   # real flag picker dialog
+  stockfish: ">=1.8.1 <2.0.0"         # native engine (Android/iOS) via FFI
   flutter_svg: ">=2.0.0 <3.0.0"
 
 dev_dependencies:

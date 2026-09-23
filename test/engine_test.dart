@@ -10,6 +10,7 @@ import 'package:chess_arena/data/time_controls.dart';
 import 'package:chess_arena/engine/chess_ai.dart';
 import 'package:chess_arena/engine/chess_rules.dart';
 import 'package:chess_arena/engine/puzzles.dart';
+import 'package:chess_arena/engine/stockfish_service.dart';
 import 'package:chess_arena/game/game_controller.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -185,6 +186,14 @@ void main() {
       final corner =
           evaluate(ChessGame.fromFen('k7/8/8/8/8/8/8/QK6 w - - 0 1'));
       expect(corner, greaterThan(center));
+    });
+    test('uci parser maps engine moves onto legal moves', () {
+      final g = ChessGame.startingPosition();
+      final m = parseUciMove(g, 'e2e4');
+      expect(m, isNotNull);
+      expect(g.playMove(m!), isNotNull);
+      expect(parseUciMove(g, 'e7e5'), isNotNull);
+      expect(parseUciMove(g, 'zz99'), isNull); // garbage rejected
     });
     test('opening book plays sensible first moves (Expert path)', () {
       final g = ChessGame.startingPosition();

@@ -648,6 +648,8 @@ class _SettingsDialog extends StatelessWidget {
                 s.showChat, 'showChat'),
             _toggle(context, s, Icons.image, 'Piece images (PNG set)',
                 s.pieceImages, 'pieceImages'),
+            _toggle(context, s, Icons.memory, 'Stockfish engine (Android/iOS)',
+                s.useStockfish, 'useStockfish'),
             const SizedBox(height: 10),
             const Align(
               alignment: Alignment.centerLeft,
