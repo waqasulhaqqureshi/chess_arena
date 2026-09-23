@@ -29,7 +29,8 @@ class SupabaseService {
     try {
       await Supabase.initialize(
         url: AppConfig.supabaseUrl,
-        anonKey: AppConfig.supabaseAnonKey,
+        // `anonKey` is deprecated in supabase_flutter 2.17 → publishableKey.
+        publishableKey: AppConfig.supabaseAnonKey,
       );
       // Connection probe (table created by supabase/schema.sql).
       await Supabase.instance.client

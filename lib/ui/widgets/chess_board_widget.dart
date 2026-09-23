@@ -266,7 +266,6 @@ class MiniBoard extends StatelessWidget {
                 return Expanded(
                   child: Row(
                     children: List.generate(8, (f) {
-                      final s = (7 - r) * 8 + f;
                       final light = (f + (7 - r)) % 2 == 1;
                       return Expanded(
                         child: Container(color: light ? theme.light : theme.dark),

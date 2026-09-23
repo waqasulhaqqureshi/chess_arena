@@ -80,7 +80,7 @@ class Database {
     return v is T ? v : fallback;
   }
 
-  /// Hive deserializes lists as List<dynamic> — read string lists safely.
+  /// Hive deserializes lists as `List<dynamic>` — read string lists safely.
   static List<String> profileStrings(String key) {
     final v = _profile.get(key, defaultValue: <String>[]);
     if (v is List) return v.map((e) => '$e').toList();

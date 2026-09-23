@@ -11,6 +11,9 @@ import 'package:flutter/foundation.dart';
 import '../core/config/app_config.dart';
 
 class AdsService {
+  /// True once a real ad SDK (google_mobile_ads) is wired in.
+  static bool get isConfigured => false;
+
   /// Interstitial after a finished game.
   static Future<void> showGameEndAd() async {
     if (!AppConfig.adsEnabled) {
